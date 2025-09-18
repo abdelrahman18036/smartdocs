@@ -624,7 +624,7 @@ async function extractHookSignature(filePath: string, hookName: string): Promise
     // Parse the TypeScript file
     const ast = babelParser.parse(content, {
       sourceType: 'module',
-      plugins: ['typescript'],
+      plugins: ['jsx', 'typescript'],
     });
 
     let hookInfo = {

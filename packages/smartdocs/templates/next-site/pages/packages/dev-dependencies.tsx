@@ -1,7 +1,7 @@
 import { GetStaticProps } from 'next'
 import { Layout } from '../../components/Layout'
 import { Package, ExternalLink, Info, Code, Wrench, Download, Star, Calendar, Settings, TestTube, Hammer } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import React from 'react'
 import Pagination, { usePagination } from '../../components/Pagination'
 
 interface DevDependency {
@@ -70,32 +70,7 @@ function categorizePackage(name: string): DevDependency['category'] {
 }
 
 export default function DevDependenciesPage({ devDependencies }: DevDependenciesPageProps) {
-  const [localDevDeps, setLocalDevDeps] = useState<DevDependency[]>(devDependencies || [])
-  const { currentPage, itemsPerPage, totalPages, currentItems, setCurrentPage, setItemsPerPage } = usePagination(localDevDeps, 9)
-
-  useEffect(() => {
-    // Try to load package.json from the project root
-    fetch('/package.json')
-      .then(res => res.json())
-      .then(pkg => {
-        if (pkg.devDependencies) {
-          const deps = Object.entries(pkg.devDependencies).map(([name, version]) => ({
-            name,
-            version: version as string,
-            description: `Development tool for ${name}`,
-            homepage: `https://npmjs.com/package/${name}`,
-            category: categorizePackage(name),
-            downloads: Math.floor(Math.random() * 500000) + 25000,
-            stars: Math.floor(Math.random() * 25000) + 500,
-            lastUpdate: new Date(Date.now() - Math.floor(Math.random() * 90) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-          }))
-          setLocalDevDeps(deps)
-        }
-      })
-      .catch(() => {
-        // Fallback to static data
-      })
-  }, [])
+  const { currentPage, itemsPerPage, totalPages, currentItems, setCurrentPage, setItemsPerPage } = usePagination(devDependencies, 9)
 
   // Group current items by category for display
   const groupedCurrentItems = currentItems.reduce((acc, dep) => {
@@ -106,7 +81,7 @@ export default function DevDependenciesPage({ devDependencies }: DevDependencies
   }, {} as Record<string, DevDependency[]>)
   
   // Get stats for all dependencies
-  const totalStats = localDevDeps.reduce((acc, dep) => {
+  const totalStats = devDependencies.reduce((acc, dep) => {
     const category = dep.category || 'other'
     acc[category] = (acc[category] || 0) + 1
     return acc
@@ -136,7 +111,7 @@ export default function DevDependenciesPage({ devDependencies }: DevDependencies
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
                 <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  {localDevDeps.length} tools
+                  {devDependencies.length} tools
                 </span>
               </div>
             </div>
@@ -279,11 +254,11 @@ export default function DevDependenciesPage({ devDependencies }: DevDependencies
           onPageChange={setCurrentPage}
           itemsPerPage={itemsPerPage}
           onItemsPerPageChange={setItemsPerPage}
-          totalItems={localDevDeps.length}
+          totalItems={devDependencies.length}
         />
       </div>
 
-        {localDevDeps.length === 0 && (
+        {devDependencies.length === 0 && (
           <div className="text-center py-12">
             <Info className="mx-auto h-12 w-12 text-muted-foreground" />
             <h3 className="mt-4 text-lg font-semibold">No development dependencies found</h3>
@@ -298,15 +273,40 @@ export default function DevDependenciesPage({ devDependencies }: DevDependencies
 }
 
 export const getStaticProps: GetStaticProps = async () => {
-  // Fallback dev dependencies in case we can't read package.json
-  const fallbackDevDependencies = [
-    { name: 'typescript', version: '^5.0.0', description: 'TypeScript compiler and language server', category: 'build' as const },
-    { name: 'eslint', version: '^8.0.0', description: 'Code linting tool for JavaScript and TypeScript', category: 'dev' as const }
-  ]
+  let devDependencies: DevDependency[] = []
+  
+  try {
+    // Try to read package.json from the project root (go up from .smartdocs/site)
+    const fs = await import('fs')
+    const path = await import('path')
+    const packageJsonPath = path.join(process.cwd(), '..', '..', 'package.json')
+    
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'))
+    
+    if (packageJson.devDependencies) {
+      devDependencies = Object.entries(packageJson.devDependencies).map(([name, version]) => ({
+        name,
+        version: version as string,
+        description: `Development tool for ${name}`,
+        homepage: `https://npmjs.com/package/${name}`,
+        category: categorizePackage(name),
+        downloads: Math.floor(Math.random() * 500000) + 25000,
+        stars: Math.floor(Math.random() * 25000) + 500,
+        lastUpdate: new Date(Date.now() - Math.floor(Math.random() * 90) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      }))
+    }
+  } catch (error) {
+    // Fallback dev dependencies in case we can't read package.json
+    console.warn('Could not read package.json, using fallback data:', error)
+    devDependencies = [
+      { name: 'typescript', version: '^5.0.0', description: 'TypeScript compiler and language server', category: 'build' as const, downloads: 500000, stars: 25000, lastUpdate: '2024-01-01' },
+      { name: 'eslint', version: '^8.0.0', description: 'Code linting tool for JavaScript and TypeScript', category: 'dev' as const, downloads: 400000, stars: 20000, lastUpdate: '2024-01-01' }
+    ]
+  }
 
   return {
     props: {
-      devDependencies: fallbackDevDependencies
+      devDependencies
     }
   }
 }

@@ -1,7 +1,7 @@
 import { GetStaticProps } from 'next'
 import { Layout } from '../../components/Layout'
 import { Package, ExternalLink, Info, Download, Star, Calendar } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import React from 'react'
 import Pagination, { usePagination } from '../../components/Pagination'
 
 interface Dependency {
@@ -19,31 +19,7 @@ interface DependenciesPageProps {
 }
 
 export default function DependenciesPage({ dependencies }: DependenciesPageProps) {
-  const [localDeps, setLocalDeps] = useState<Dependency[]>(dependencies || [])
-  const { currentPage, itemsPerPage, totalPages, currentItems, setCurrentPage, setItemsPerPage } = usePagination(localDeps, 9)
-
-  useEffect(() => {
-    // Try to load package.json from the project root
-    fetch('/package.json')
-      .then(res => res.json())
-      .then(pkg => {
-        if (pkg.dependencies) {
-          const deps = Object.entries(pkg.dependencies).map(([name, version]) => ({
-            name,
-            version: version as string,
-            description: `Production dependency for ${name}`,
-            homepage: `https://npmjs.com/package/${name}`,
-            downloads: Math.floor(Math.random() * 1000000) + 50000,
-            stars: Math.floor(Math.random() * 50000) + 1000,
-            lastUpdate: new Date(Date.now() - Math.floor(Math.random() * 90) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-          }))
-          setLocalDeps(deps)
-        }
-      })
-      .catch(() => {
-        // Fallback to static data
-      })
-  }, [])
+  const { currentPage, itemsPerPage, totalPages, currentItems, setCurrentPage, setItemsPerPage } = usePagination(dependencies, 9)
 
   return (
     <div className="space-y-8">
@@ -69,7 +45,7 @@ export default function DependenciesPage({ dependencies }: DependenciesPageProps
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  {localDeps.length} packages
+                  {dependencies.length} packages
                 </span>
               </div>
             </div>
@@ -169,11 +145,11 @@ export default function DependenciesPage({ dependencies }: DependenciesPageProps
           onPageChange={setCurrentPage}
           itemsPerPage={itemsPerPage}
           onItemsPerPageChange={setItemsPerPage}
-          totalItems={localDeps.length}
+          totalItems={dependencies.length}
         />
       </div>
 
-        {localDeps.length === 0 && (
+        {dependencies.length === 0 && (
           <div className="text-center py-12">
             <Info className="mx-auto h-12 w-12 text-muted-foreground" />
             <h3 className="mt-4 text-lg font-semibold">No dependencies found</h3>
@@ -188,15 +164,39 @@ export default function DependenciesPage({ dependencies }: DependenciesPageProps
 }
 
 export const getStaticProps: GetStaticProps = async () => {
-  // Fallback dependencies in case we can't read package.json
-  const fallbackDependencies = [
-    { name: 'react', version: '^18.0.0', description: 'A JavaScript library for building user interfaces' },
-    { name: 'react-dom', version: '^18.0.0', description: 'React package for working with the DOM' }
-  ]
+  let dependencies: Dependency[] = []
+  
+  try {
+    // Try to read package.json from the project root (go up from .smartdocs/site)
+    const fs = await import('fs')
+    const path = await import('path')
+    const packageJsonPath = path.join(process.cwd(), '..', '..', 'package.json')
+    
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'))
+    
+    if (packageJson.dependencies) {
+      dependencies = Object.entries(packageJson.dependencies).map(([name, version]) => ({
+        name,
+        version: version as string,
+        description: `Production dependency for ${name}`,
+        homepage: `https://npmjs.com/package/${name}`,
+        downloads: Math.floor(Math.random() * 1000000) + 50000,
+        stars: Math.floor(Math.random() * 50000) + 1000,
+        lastUpdate: new Date(Date.now() - Math.floor(Math.random() * 90) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      }))
+    }
+  } catch (error) {
+    // Fallback dependencies in case we can't read package.json
+    console.warn('Could not read package.json, using fallback data:', error)
+    dependencies = [
+      { name: 'react', version: '^18.0.0', description: 'A JavaScript library for building user interfaces', downloads: 1000000, stars: 50000, lastUpdate: '2024-01-01' },
+      { name: 'react-dom', version: '^18.0.0', description: 'React package for working with the DOM', downloads: 900000, stars: 45000, lastUpdate: '2024-01-01' }
+    ]
+  }
 
   return {
     props: {
-      dependencies: fallbackDependencies
+      dependencies
     }
   }
 }
