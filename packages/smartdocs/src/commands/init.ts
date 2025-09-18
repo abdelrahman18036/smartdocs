@@ -14,7 +14,7 @@ export async function init() {
 export default defineConfig({
   projectName: "My App",
   entryPaths: ["src/**/*.{ts,tsx,js,jsx}"],
-  include: ["src/components/**","src/hooks/**","app/**","pages/**"],
+  include: ["src/**","app/**","pages/**"],
   exclude: ["**/__tests__/**","**/*.stories.*","node_modules/**"],
   outDir: ".smartdocs",
   siteOutDir: "smartdocs-dist",
