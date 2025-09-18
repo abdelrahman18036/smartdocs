@@ -108,69 +108,137 @@ export function Sidebar({}: SidebarProps) {
   }, {} as Record<string, ComponentData[]>)
 
   return (
-    <aside className="sticky top-16 h-[calc(100vh-4rem)] w-64 border-r bg-muted/30 overflow-y-auto">
+    <aside className="sticky top-16 h-[calc(100vh-4rem)] w-64 border-r bg-slate-50/50 dark:bg-slate-900/50 overflow-y-auto backdrop-blur-sm">
       <div className="p-4">
-        <nav className="space-y-2">
+        <nav className="space-y-3">
           <div>
             <Link 
               href="/"
-              className={`flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 hover:bg-accent hover:text-accent-foreground ${
-                router.pathname === '/' ? 'bg-accent text-accent-foreground' : ''
+              className={`flex items-center rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 group relative ${
+                router.pathname === '/' 
+                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/25' 
+                  : 'hover:bg-white dark:hover:bg-slate-800 hover:shadow-md text-slate-700 dark:text-slate-300'
               }`}
             >
-              <Home className="mr-3 h-4 w-4" />
-              Overview
+              {router.pathname === '/' && (
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl opacity-100"></div>
+              )}
+              <Home className={`mr-3 h-4 w-4 relative z-10 ${
+                router.pathname === '/' ? 'text-white' : 'text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300'
+              }`} />
+              <span className="relative z-10">Overview</span>
+              {router.pathname === '/' && (
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 w-2 h-2 bg-white/30 rounded-full animate-pulse"></div>
+              )}
             </Link>
           </div>
 
           {Object.entries(groupedComponents).map(([type, items]) => {
             const isExpanded = expandedSections.has(type)
             const typeLabel = type.charAt(0).toUpperCase() + type.slice(1) + 's'
+            const hasActiveChild = items.some(item => {
+              const expectedPath = `/${type}s/${item.displayName.toLowerCase()}`
+              return router.asPath === expectedPath || router.pathname === expectedPath
+            })
+            
+            const getSectionColor = (type: string) => {
+              switch (type) {
+                case 'hook': return hasActiveChild || isExpanded ? 'from-green-500 to-green-600' : 'from-green-400 to-green-500'
+                case 'component': return hasActiveChild || isExpanded ? 'from-blue-500 to-blue-600' : 'from-blue-400 to-blue-500'
+                case 'page': return hasActiveChild || isExpanded ? 'from-purple-500 to-purple-600' : 'from-purple-400 to-purple-500'
+                case 'api': return hasActiveChild || isExpanded ? 'from-orange-500 to-orange-600' : 'from-orange-400 to-orange-500'
+                default: return hasActiveChild || isExpanded ? 'from-slate-500 to-slate-600' : 'from-slate-400 to-slate-500'
+              }
+            }
             
             return (
-              <div key={type} className="space-y-1">
+              <div key={type} className="space-y-2">
                 <button
                   onClick={() => toggleSection(type)}
-                  className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-all duration-200 group"
+                  className={`flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 group relative ${
+                    hasActiveChild 
+                      ? 'bg-white dark:bg-slate-800 shadow-lg text-slate-900 dark:text-slate-100' 
+                      : 'hover:bg-white dark:hover:bg-slate-800 hover:shadow-md text-slate-700 dark:text-slate-300'
+                  }`}
                 >
-                  <div className="flex items-center">
-                    {getIcon(type)}
+                  {hasActiveChild && (
+                    <div className={`absolute inset-0 bg-gradient-to-r ${getSectionColor(type)} opacity-10 rounded-xl`}></div>
+                  )}
+                  <div className="flex items-center relative z-10">
+                    <div className={`p-1.5 rounded-lg bg-gradient-to-r ${getSectionColor(type)} ${hasActiveChild ? 'shadow-lg' : 'shadow-md'}`}>
+                      <div className="text-white">
+                        {getIcon(type)}
+                      </div>
+                    </div>
                     <span className="ml-3">{typeLabel}</span>
-                    <span className="ml-2 text-xs text-muted-foreground">({items.length})</span>
+                    <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${
+                      hasActiveChild 
+                        ? 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300' 
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-500'
+                    }`}>
+                      {items.length}
+                    </span>
                   </div>
                   <ChevronRight 
-                    className={`h-4 w-4 transition-transform duration-200 ${
-                      isExpanded ? 'rotate-90' : ''
+                    className={`h-4 w-4 transition-all duration-200 relative z-10 ${
+                      isExpanded ? 'rotate-90 text-slate-700 dark:text-slate-300' : 'text-slate-400'
                     }`} 
                   />
+                  {hasActiveChild && (
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                  )}
                 </button>
                 
                 <div className={`overflow-hidden transition-all duration-300 ${
                   isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
                 }`}>
-                  <div className="ml-4 space-y-1 border-l border-border/50 pl-4">
+                  <div className="ml-6 space-y-1 border-l-2 border-slate-200 dark:border-slate-700 pl-4 relative">
+                    {hasActiveChild && (
+                      <div className={`absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b ${getSectionColor(type)} rounded-full`}></div>
+                    )}
                     {items.map((item) => {
                       const href = `/${type}s/${item.displayName.toLowerCase()}`
-                      const isActive = router.asPath === href
+                      const isActive = router.asPath === href || router.pathname === href
                       
                       return (
                         <Link
                           key={item.displayName}
                           href={href}
-                          className={`block rounded-lg px-3 py-2 text-sm transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:translate-x-1 ${
-                            isActive ? 'bg-accent text-accent-foreground border-l-2 border-primary' : 'text-muted-foreground'
+                          className={`block rounded-lg px-3 py-2.5 text-sm transition-all duration-200 relative group ${
+                            isActive 
+                              ? 'bg-white dark:bg-slate-800 shadow-md text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700' 
+                              : 'hover:bg-white/50 dark:hover:bg-slate-800/50 hover:translate-x-1 text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
                           }`}
                         >
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium">{item.displayName}</span>
+                          {isActive && (
+                            <>
+                              <div className={`absolute inset-0 bg-gradient-to-r ${getSectionColor(type)} opacity-5 rounded-lg`}></div>
+                              <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-gradient-to-b ${getSectionColor(type)} rounded-full -ml-5`}></div>
+                            </>
+                          )}
+                          <div className="flex items-center justify-between relative z-10">
+                            <div className="flex items-center gap-2">
+                              <span className={`font-semibold ${isActive ? 'text-slate-900 dark:text-slate-100' : ''}`}>
+                                {item.displayName}
+                              </span>
+                              {isActive && (
+                                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
+                              )}
+                            </div>
                             {item.props && item.props.length > 0 && (
-                              <span className="text-xs text-muted-foreground">
+                              <span className={`px-1.5 py-0.5 text-xs rounded-full font-medium ${
+                                isActive 
+                                  ? 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                              }`}>
                                 {item.props.length}
                               </span>
                             )}
                           </div>
                           {item.description && (
-                            <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                            <div className={`text-xs mt-1.5 line-clamp-2 relative z-10 ${
+                              isActive ? 'text-slate-600 dark:text-slate-400' : 'text-slate-500 dark:text-slate-500'
+                            }`}>
                               {item.description}
                             </div>
                           )}
@@ -184,55 +252,117 @@ export function Sidebar({}: SidebarProps) {
           })}
 
           {/* Packages Section */}
-          <div className="space-y-1">
-            <button
-              onClick={() => toggleSection('packages')}
-              className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-all duration-200 group"
-            >
-              <div className="flex items-center">
-                {getIcon('packages')}
-                <span className="ml-3">Packages</span>
-              </div>
-              <ChevronRight 
-                className={`h-4 w-4 transition-transform duration-200 ${
-                  expandedSections.has('packages') ? 'rotate-90' : ''
-                }`} 
-              />
-            </button>
-            
-            <div className={`overflow-hidden transition-all duration-300 ${
-              expandedSections.has('packages') ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-            }`}>
-              <div className="ml-4 space-y-1 border-l border-border/50 pl-4">
-                <Link
-                  href="/packages/dependencies"
-                  className={`block rounded-lg px-3 py-2 text-sm transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:translate-x-1 ${
-                    router.asPath === '/packages/dependencies' ? 'bg-accent text-accent-foreground border-l-2 border-primary' : 'text-muted-foreground'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">Dependencies</span>
+          <div className="space-y-2">
+            {(() => {
+              const hasActivePackage = router.asPath === '/packages/dependencies' || router.asPath === '/packages/dev-dependencies' ||
+                                      router.pathname === '/packages/dependencies' || router.pathname === '/packages/dev-dependencies'
+              const isPackagesExpanded = expandedSections.has('packages')
+              
+              return (
+                <>
+                  <button
+                    onClick={() => toggleSection('packages')}
+                    className={`flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 group relative ${
+                      hasActivePackage 
+                        ? 'bg-white dark:bg-slate-800 shadow-lg text-slate-900 dark:text-slate-100' 
+                        : 'hover:bg-white dark:hover:bg-slate-800 hover:shadow-md text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    {hasActivePackage && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-slate-500 to-slate-600 opacity-10 rounded-xl"></div>
+                    )}
+                    <div className="flex items-center relative z-10">
+                      <div className={`p-1.5 rounded-lg bg-gradient-to-r from-slate-500 to-slate-600 ${hasActivePackage ? 'shadow-lg' : 'shadow-md'}`}>
+                        <div className="text-white">
+                          {getIcon('packages')}
+                        </div>
+                      </div>
+                      <span className="ml-3">Packages</span>
+                    </div>
+                    <ChevronRight 
+                      className={`h-4 w-4 transition-all duration-200 relative z-10 ${
+                        isPackagesExpanded ? 'rotate-90 text-slate-700 dark:text-slate-300' : 'text-slate-400'
+                      }`} 
+                    />
+                    {hasActivePackage && (
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-500 rounded-full animate-pulse"></div>
+                    )}
+                  </button>
+                  
+                  <div className={`overflow-hidden transition-all duration-300 ${
+                    isPackagesExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                  }`}>
+                    <div className="ml-6 space-y-1 border-l-2 border-slate-200 dark:border-slate-700 pl-4 relative">
+                      {hasActivePackage && (
+                        <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-slate-500 to-slate-600 rounded-full"></div>
+                      )}
+                      
+                      <Link
+                        href="/packages/dependencies"
+                        className={`block rounded-lg px-3 py-2.5 text-sm transition-all duration-200 relative group ${
+                          router.asPath === '/packages/dependencies' || router.pathname === '/packages/dependencies'
+                            ? 'bg-white dark:bg-slate-800 shadow-md text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700' 
+                            : 'hover:bg-white/50 dark:hover:bg-slate-800/50 hover:translate-x-1 text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                        }`}
+                      >
+                        {(router.asPath === '/packages/dependencies' || router.pathname === '/packages/dependencies') && (
+                          <>
+                            <div className="absolute inset-0 bg-gradient-to-r from-slate-500 to-slate-600 opacity-5 rounded-lg"></div>
+                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-gradient-to-b from-slate-500 to-slate-600 rounded-full -ml-5"></div>
+                          </>
+                        )}
+                        <div className="flex items-center justify-between relative z-10">
+                          <div className="flex items-center gap-2">
+                            <span className={`font-semibold ${(router.asPath === '/packages/dependencies' || router.pathname === '/packages/dependencies') ? 'text-slate-900 dark:text-slate-100' : ''}`}>
+                              Dependencies
+                            </span>
+                            {(router.asPath === '/packages/dependencies' || router.pathname === '/packages/dependencies') && (
+                              <div className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-pulse"></div>
+                            )}
+                          </div>
+                        </div>
+                        <div className={`text-xs mt-1.5 relative z-10 ${
+                          (router.asPath === '/packages/dependencies' || router.pathname === '/packages/dependencies') ? 'text-slate-600 dark:text-slate-400' : 'text-slate-500 dark:text-slate-500'
+                        }`}>
+                          Production dependencies
+                        </div>
+                      </Link>
+                      
+                      <Link
+                        href="/packages/dev-dependencies"
+                        className={`block rounded-lg px-3 py-2.5 text-sm transition-all duration-200 relative group ${
+                          router.asPath === '/packages/dev-dependencies' || router.pathname === '/packages/dev-dependencies'
+                            ? 'bg-white dark:bg-slate-800 shadow-md text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700' 
+                            : 'hover:bg-white/50 dark:hover:bg-slate-800/50 hover:translate-x-1 text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                        }`}
+                      >
+                        {(router.asPath === '/packages/dev-dependencies' || router.pathname === '/packages/dev-dependencies') && (
+                          <>
+                            <div className="absolute inset-0 bg-gradient-to-r from-slate-500 to-slate-600 opacity-5 rounded-lg"></div>
+                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-gradient-to-b from-slate-500 to-slate-600 rounded-full -ml-5"></div>
+                          </>
+                        )}
+                        <div className="flex items-center justify-between relative z-10">
+                          <div className="flex items-center gap-2">
+                            <span className={`font-semibold ${(router.asPath === '/packages/dev-dependencies' || router.pathname === '/packages/dev-dependencies') ? 'text-slate-900 dark:text-slate-100' : ''}`}>
+                              Dev Dependencies
+                            </span>
+                            {(router.asPath === '/packages/dev-dependencies' || router.pathname === '/packages/dev-dependencies') && (
+                              <div className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-pulse"></div>
+                            )}
+                          </div>
+                        </div>
+                        <div className={`text-xs mt-1.5 relative z-10 ${
+                          (router.asPath === '/packages/dev-dependencies' || router.pathname === '/packages/dev-dependencies') ? 'text-slate-600 dark:text-slate-400' : 'text-slate-500 dark:text-slate-500'
+                        }`}>
+                          Development dependencies
+                        </div>
+                      </Link>
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Production dependencies
-                  </div>
-                </Link>
-                
-                <Link
-                  href="/packages/dev-dependencies"
-                  className={`block rounded-lg px-3 py-2 text-sm transition-all duration-200 hover:bg-accent hover:text-accent-foreground hover:translate-x-1 ${
-                    router.asPath === '/packages/dev-dependencies' ? 'bg-accent text-accent-foreground border-l-2 border-primary' : 'text-muted-foreground'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">Dev Dependencies</span>
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Development dependencies
-                  </div>
-                </Link>
-              </div>
-            </div>
+                </>
+              )
+            })()}
           </div>
         </nav>
       </div>

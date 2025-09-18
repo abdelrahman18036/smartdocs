@@ -13,10 +13,8 @@ export function Layout({ children }: LayoutProps) {
       <div className="flex flex-1">
         <Sidebar />
         <main className="flex-1 flex flex-col">
-          <div className="flex-1 container mx-auto px-4 py-8 lg:px-8 lg:py-12">
-            <div className="mx-auto max-w-4xl">
-              {children}
-            </div>
+          <div className="flex-1 container mx-auto px-6 py-8 lg:px-12 lg:py-12 max-w-7xl">
+            {children}
           </div>
           
           {/* Footer */}

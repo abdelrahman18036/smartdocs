@@ -13,7 +13,6 @@ export async function build(opts: { config?: string }) {
   
   // 1) Scan for all components, hooks, pages, etc.
   const patterns = config.entryPaths;
-  console.log(`🔍 Using scan patterns: ${patterns.join(', ')}`);
   const components = await scanComponents(patterns);
   
   console.log(`✓ Found ${components.length} items to document`);

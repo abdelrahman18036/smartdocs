@@ -62,60 +62,89 @@ function ComponentSection({ type, items }: { type: string; items: ComponentData[
   const typeLabel = type.charAt(0).toUpperCase() + type.slice(1) + 's'
   
   return (
-    <section className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r ${getGradient(type)} border`}>
-            {getIcon(type)}
+    <section className="space-y-8">
+      <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center space-x-4">
+            <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-r ${getGradient(type)} border-2 border-white dark:border-slate-700 shadow-lg`}>
+              <div className="text-lg">
+                {getIcon(type)}
+              </div>
+            </div>
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{typeLabel}</h2>
+              <div className="flex items-center gap-3 mt-1">
+                <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+                  {totalItems} {totalItems === 1 ? type : type + 's'} available
+                </p>
+                <div className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${getBadgeColor(type)} shadow-sm`}>
+                  {type === 'hook' && '🪝 '}
+                  {type === 'component' && '⚛️ '}
+                  {type === 'page' && '📄 '}
+                  {type === 'api' && '🔌 '}
+                  {type === 'mdx' && '📝 '}
+                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                </div>
+              </div>
+            </div>
           </div>
-          <div>
-            <h2 className="text-2xl font-semibold tracking-tight">{typeLabel}</h2>
-            <p className="text-sm text-muted-foreground">
-              {totalItems} {totalItems === 1 ? type : type + 's'} available
-            </p>
+          
+          {/* Enhanced quick stats */}
+          <div className="text-right">
+            <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-2 rounded-lg">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h4a1 1 0 011 1v2h2a1 1 0 110 2H6a1 1 0 110-2h1zM5 6v12a2 2 0 002 2h6a2 2 0 002-2V6H5z" />
+              </svg>
+              <span className="font-medium">Page {currentPage} of {totalPages}</span>
+            </div>
           </div>
-        </div>
-        
-        {/* Quick stats for this type */}
-        <div className="text-right">
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            Page {currentPage} of {totalPages}
-          </p>
         </div>
       </div>
       
       {/* Cards Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {currentItems.map((item) => (
           <a
             key={item.displayName}
             href={`/${type}s/${item.displayName.toLowerCase()}`}
             className="group block"
           >
-            <div className={`relative rounded-xl border bg-gradient-to-br ${getGradient(type)} p-6 transition-all duration-300 hover:shadow-lg hover:shadow-black/5 hover:-translate-y-1 hover:border-border/80`}>
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <h3 className="font-semibold text-lg group-hover:text-primary transition-colors duration-200 truncate">
+            <div className={`relative rounded-xl border bg-gradient-to-br ${getGradient(type)} p-6 transition-all duration-300 hover:shadow-xl hover:shadow-black/10 hover:-translate-y-2 hover:border-border/80 flex flex-col h-full min-h-[200px]`}>
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center space-x-2 flex-1 min-w-0">
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-r ${getGradient(type)} border shadow-sm`}>
+                    {getIcon(type)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-lg group-hover:text-primary transition-colors duration-200 truncate text-slate-900 dark:text-slate-100">
                       {item.displayName}
                     </h3>
-                    <span className={`inline-flex items-center rounded-md border px-2 py-1 text-xs font-medium ${getBadgeColor(type)}`}>
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${getBadgeColor(type)} shadow-sm`}>
                       {type}
                     </span>
                   </div>
-                  
-                  <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
-                    {item.description || 'No description available'}
-                  </p>
-                  
-                  <div className="flex items-center justify-between">
+                </div>
+              </div>
+              
+              <div className="flex-1 flex flex-col justify-between">
+                <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-3 mb-4 leading-relaxed">
+                  {item.description || 'No description available'}
+                </p>
+                
+                <div className="flex items-center justify-between pt-4 border-t border-slate-200/50 dark:border-slate-700/50">
+                  <div className="flex items-center gap-3">
                     {item.props && item.props.length > 0 && (
-                      <div className="text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1 text-xs font-medium bg-slate-100 dark:bg-slate-800 px-2.5 py-1.5 rounded-full text-slate-600 dark:text-slate-400">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                        </svg>
                         {item.props.length} prop{item.props.length !== 1 ? 's' : ''}
                       </div>
                     )}
-                    
-                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all duration-200" />
+                  </div>
+                  
+                  <div className="flex items-center text-primary group-hover:scale-110 transition-all duration-200">
+                    <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform duration-200" />
                   </div>
                 </div>
               </div>
@@ -172,19 +201,69 @@ export function ComponentsList({ components }: ComponentsListProps) {
 
   return (
     <div className="space-y-16">
-      {/* Summary Stats */}
-      <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-6 border border-slate-200 dark:border-slate-700">
-        <h2 className="text-lg font-semibold mb-4">Documentation Overview</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-          {Object.entries(groupedComponents).map(([type, items]) => (
-            <div key={type} className="text-center">
-              <div className={`mx-auto w-12 h-12 rounded-lg bg-gradient-to-r ${getGradient(type)} border flex items-center justify-center mb-2`}>
-                {getIcon(type)}
+      {/* Enhanced Overview Dashboard */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 rounded-2xl p-8 border border-slate-200 dark:border-slate-700 shadow-xl">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 bg-grid-slate-100 dark:bg-grid-slate-700/50 opacity-30"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-transparent to-purple-50/50 dark:from-blue-900/10 dark:to-purple-900/10"></div>
+        
+        <div className="relative">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-slate-900 via-slate-700 to-slate-900 dark:from-slate-100 dark:via-slate-300 dark:to-slate-100 bg-clip-text text-transparent mb-2">
+              📚 Documentation Overview
+            </h2>
+            <p className="text-slate-600 dark:text-slate-400 font-medium">
+              Your complete codebase documentation at a glance
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
+            {Object.entries(groupedComponents).map(([type, items]) => (
+              <div key={type} className="group">
+                <div className="bg-white dark:bg-slate-800/50 rounded-xl p-6 border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 backdrop-blur-sm">
+                  <div className="text-center">
+                    <div className={`mx-auto w-16 h-16 rounded-xl bg-gradient-to-r ${getGradient(type)} border-2 border-white dark:border-slate-700 shadow-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                      <div className="text-lg">
+                        {getIcon(type)}
+                      </div>
+                    </div>
+                    <div className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-1 group-hover:scale-110 transition-transform duration-300">
+                      {items.length}
+                    </div>
+                    <div className="text-sm font-semibold text-slate-600 dark:text-slate-400 capitalize mb-2">
+                      {type}{items.length !== 1 ? 's' : ''}
+                    </div>
+                    <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getBadgeColor(type)} shadow-sm`}>
+                      {type === 'hook' && '🪝 '}
+                      {type === 'component' && '⚛️ '}
+                      {type === 'page' && '📄 '}
+                      {type === 'api' && '🔌 '}
+                      {type === 'mdx' && '📝 '}
+                      {type.charAt(0).toUpperCase() + type.slice(1)}
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="text-2xl font-bold text-slate-800 dark:text-slate-200">{items.length}</div>
-              <div className="text-sm text-slate-600 dark:text-slate-400 capitalize">{type}s</div>
+            ))}
+          </div>
+          
+          {/* Total Stats */}
+          <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-center sm:text-left">
+                <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                  {Object.values(groupedComponents).reduce((acc, items) => acc + items.length, 0)} Total Items
+                </div>
+                <div className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+                  Documented across {Object.keys(groupedComponents).length} categories
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="font-medium">Documentation up to date</span>
+              </div>
             </div>
-          ))}
+          </div>
         </div>
       </div>
 

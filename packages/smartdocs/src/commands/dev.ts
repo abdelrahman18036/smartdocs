@@ -11,8 +11,6 @@ export async function dev(opts: { port: string }) {
   const config = await loadConfig(cfgPath);
   const port = opts.port || "4400";
 
-  console.log("🚀 Starting SmartDocs development server...");
-
   // Initial build
   await buildDocumentation(config);
   
