@@ -26,7 +26,7 @@ export default function ApiPage({ component }: ApiPageProps) {
           <div className="overflow-x-auto">
             <table className="w-full border-collapse border border-gray-300">
               <thead>
-                <tr className="bg-gray-50">
+                <tr >
                   <th className="border border-gray-300 px-4 py-2 text-left">Name</th>
                   <th className="border border-gray-300 px-4 py-2 text-left">Type</th>
                   <th className="border border-gray-300 px-4 py-2 text-left">Description</th>
