@@ -1,0 +1,39 @@
+﻿{
+  "name": "smartdocs-workspace",
+  "private": true,
+  "packageManager": "pnpm@10.17.0",
+  "version": "0.0.0",
+  "description": "Auto-generate beautiful documentation for React/Next.js projects",
+  "keywords": [
+    "documentation",
+    "react",
+    "nextjs",
+    "typescript",
+    "components",
+    "hooks",
+    "storybook",
+    "jsdoc",
+    "mdx"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/smartdocs-workspace"
+  },
+  "author": "SmartDocs Team",
+  "license": "MIT",
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "pnpm -r dev",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "clean": "pnpm -r clean",
+    "release": "pnpm build && pnpm -r publish"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}
