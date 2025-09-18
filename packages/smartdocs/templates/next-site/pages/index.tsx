@@ -27,7 +27,7 @@ export default function Home({ components }: HomeProps) {
 
 export const getStaticProps: GetStaticProps = async () => {
   try {
-    const searchPath = path.join(process.cwd(), '..', '.smartdocs', 'content', 'search.json')
+    const searchPath = path.join(process.cwd(), '..', 'content', 'search.json')
     const searchData = JSON.parse(fs.readFileSync(searchPath, 'utf-8'))
     
     return {
@@ -36,6 +36,7 @@ export const getStaticProps: GetStaticProps = async () => {
       }
     }
   } catch (error) {
+    console.log('Error loading search data:', error)
     return {
       props: {
         components: []
