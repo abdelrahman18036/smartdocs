@@ -93,3 +93,5 @@ temp/
 *.njsproj
 *.sln
 *.sw?
+/demo
+package-lock.json
