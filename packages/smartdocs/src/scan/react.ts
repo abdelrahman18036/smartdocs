@@ -62,20 +62,48 @@ export async function scanComponents(patterns: string[]): Promise<ComponentDoc[]
         let parsed: any[] = [];
         
         try {
-          // First try: Default parser
-          parsed = reactDocgenTs.parse(file, {
+          // First try: Advanced parser with custom configuration for FC pattern
+          const parser = reactDocgenTs.withDefaultConfig({
             savePropValueAsString: true,
             shouldExtractLiteralValuesFromEnum: true,
             shouldRemoveUndefinedFromOptional: true,
-            propFilter: (prop: any) => {
-              // Filter out props from node_modules
+            skipChildrenPropWithoutDoc: false,
+            componentNameResolver: (exp: any, source: any) => {
+              // Try to find component names more aggressively
+              if (exp.getName) {
+                return exp.getName();
+              }
+              // Look for React.FC patterns
+              if (source && source.fileName) {
+                const baseName = path.basename(source.fileName, path.extname(source.fileName));
+                return baseName.charAt(0).toUpperCase() + baseName.slice(1);
+              }
+              return undefined;
+            },
+            propFilter: (prop: any, component: any) => {
+              // Filter out props from node_modules but keep all user props
               if (prop.parent) {
                 return !prop.parent.fileName.includes('node_modules');
               }
               return true;
             }
           });
+          parsed = parser.parse(file);
+          
+          // If no props found, force manual parsing for React.FC pattern
+          if (parsed && parsed.length > 0 && parsed.every(p => !p.props || Object.keys(p.props).length === 0)) {
+            const fileContent = await fs.readFile(file, 'utf-8');
+            const manuallyParsed = await parseTypeScriptManually(file, fileContent, relativePath);
+            if (manuallyParsed.length > 0) {
+              // Replace with manually parsed results if they have props
+              if (manuallyParsed.some(comp => comp.props && comp.props.length > 0)) {
+                docs.push(...manuallyParsed);
+                continue;
+              }
+            }
+          }
         } catch (error1) {
+          console.log(`First parser failed for ${file}, trying with custom config...`);
           try {
             // Second try: With TypeScript compiler options
             const tsConfigPath = path.resolve(process.cwd(), "tsconfig.json");
@@ -83,6 +111,7 @@ export async function scanComponents(patterns: string[]): Promise<ComponentDoc[]
               savePropValueAsString: true,
               shouldExtractLiteralValuesFromEnum: true,
               shouldRemoveUndefinedFromOptional: true,
+              skipChildrenPropWithoutDoc: false,
               propFilter: (prop: any) => {
                 if (prop.parent) {
                   return !prop.parent.fileName.includes('node_modules');
@@ -92,11 +121,23 @@ export async function scanComponents(patterns: string[]): Promise<ComponentDoc[]
             });
             parsed = parser.parse(file);
           } catch (error2) {
+            console.log(`Second parser failed for ${file}, trying simple parser...`);
             try {
               // Third try: Simple parse without options
               parsed = reactDocgenTs.parse(file);
             } catch (error3) {
-              console.warn(`Failed to parse TypeScript file ${file}:`, error3);
+              console.log(`All parsers failed for ${file}, trying manual parsing...`);
+              // Try to parse manually for specific patterns
+              try {
+                const fileContent = await fs.readFile(file, 'utf-8');
+                const manuallyParsed = await parseTypeScriptManually(file, fileContent, relativePath);
+                if (manuallyParsed.length > 0) {
+                  console.log(`Manual parsing succeeded for ${file}, found ${manuallyParsed.length} components`);
+                  docs.push(...manuallyParsed);
+                }
+              } catch (manualError) {
+                console.warn(`Manual parsing also failed for ${file}:`, manualError);
+              }
               continue;
             }
           }
@@ -161,6 +202,107 @@ export async function scanComponents(patterns: string[]): Promise<ComponentDoc[]
     }
   }
   return docs;
+}
+
+async function parseTypeScriptManually(filePath: string, content: string, relativePath: string): Promise<ComponentDoc[]> {
+  const docs: ComponentDoc[] = [];
+  
+  try {
+    // Look for interface definitions with detailed JSDoc parsing
+    const interfacePattern = /export\s+interface\s+(\w+Props)\s*\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}/gs;
+    const componentPattern = /export\s+(?:default\s+)?(?:const|function)\s+(\w+)(?:\s*[:=]\s*(?:React\.)?FC<(\w+Props)>|\s*\([^)]*\)\s*:\s*JSX\.Element)/gs;
+    
+    const interfaces = new Map<string, Array<{ name: string; type: string; required: boolean; description?: string }>>();
+    let match;
+    
+    // Extract interfaces with JSDoc
+    while ((match = interfacePattern.exec(content)) !== null) {
+      const [, interfaceName, propsContent] = match;
+      const props = extractPropsFromInterface(propsContent);
+      interfaces.set(interfaceName, props);
+    }
+    
+    // Extract components and match with interfaces
+    while ((match = componentPattern.exec(content)) !== null) {
+      const [, componentName, propsInterface] = match;
+      
+      const props = propsInterface && interfaces.has(propsInterface) 
+        ? interfaces.get(propsInterface)!
+        : [];
+      
+      docs.push({
+        displayName: componentName,
+        description: extractComponentDescription(content, componentName),
+        type: 'component',
+        props: props,
+        filePath: relativePath
+      });
+    }
+  } catch (error) {
+    console.warn(`Manual parsing failed for ${filePath}:`, error);
+  }
+  
+  return docs;
+}
+
+function extractComponentDescription(content: string, componentName: string): string {
+  // Look for JSDoc comment before the component export
+  const componentPattern = new RegExp(`\\/\\*\\*([\\s\\S]*?)\\*\\/\\s*export\\s+(?:const|function)\\s+${componentName}`, 'i');
+  const match = content.match(componentPattern);
+  
+  if (match && match[1]) {
+    return match[1]
+      .split('\n')
+      .map(line => line.replace(/^\s*\*\s?/, '').trim())
+      .filter(line => line && !line.startsWith('@'))
+      .join('\n')
+      .trim();
+  }
+  
+  return '';
+}
+
+function extractPropsFromInterface(propsContent: string): Array<{ name: string; type: string; required: boolean; description?: string }> {
+  const props: Array<{ name: string; type: string; required: boolean; description?: string }> = [];
+  
+  // Split by lines and process each property
+  const lines = propsContent.split('\n');
+  let currentProp: { name: string; type: string; required: boolean; description?: string } | null = null;
+  let currentDescription = '';
+  
+  for (const line of lines) {
+    const trimmed = line.trim();
+    
+    // Skip empty lines and comments
+    if (!trimmed || trimmed.startsWith('//')) continue;
+    
+    // Check for JSDoc comment
+    if (trimmed.startsWith('/**') || trimmed.startsWith('*')) {
+      const comment = trimmed.replace(/^\/?\*\*?\s?/, '').replace(/\*\/$/, '').trim();
+      if (comment && !comment.startsWith('@')) {
+        currentDescription += (currentDescription ? ' ' : '') + comment;
+      }
+      continue;
+    }
+    
+    // Check for property definition
+    const propMatch = trimmed.match(/^\s*(\w+)(\??):\s*([^;,\n]+)/);
+    if (propMatch) {
+      const [, propName, optional, propType] = propMatch;
+      
+      props.push({
+        name: propName,
+        type: propType.trim().replace(/;$/, ''),
+        required: !optional,
+        description: currentDescription || undefined
+      });
+      
+      // Reset for next property
+      currentDescription = '';
+    }
+  }
+  
+  return props;
 }
 
 async function extractStorybookExamples(storyFiles: string[]): Promise<Record<string, string[]>> {
