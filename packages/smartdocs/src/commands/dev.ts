@@ -80,15 +80,12 @@ function startFileWatcher(config: Config): void {
 
   watcher
     .on('change', async (filePath: string) => {
-      console.log(`📝 File changed: ${path.relative(process.cwd(), filePath)}`);
       await debouncedRebuild(config);
     })
     .on('add', async (filePath: string) => {
-      console.log(`➕ File added: ${path.relative(process.cwd(), filePath)}`);
       await debouncedRebuild(config);
     })
     .on('unlink', async (filePath: string) => {
-      console.log(`🗑️  File removed: ${path.relative(process.cwd(), filePath)}`);
       await debouncedRebuild(config);
     });
 
