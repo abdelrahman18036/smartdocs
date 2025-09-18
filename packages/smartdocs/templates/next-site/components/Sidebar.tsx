@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ChevronRight, ChevronDown, Component, Zap, FileText, Code, Home, Package, Globe } from 'lucide-react'
+import { ChevronRight, ChevronDown, Component, Zap, FileText, Code, Home, Package, Globe, Map } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 
@@ -38,6 +38,7 @@ export function Sidebar({}: SidebarProps) {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['pages', 'components', 'hooks']))
   const [components, setComponents] = useState<ComponentData[]>([])
   const [pages, setPages] = useState<PageData[]>([])
+  const [packageCount, setPackageCount] = useState<number>(0)
 
   useEffect(() => {
     // Load components data client-side
@@ -45,6 +46,15 @@ export function Sidebar({}: SidebarProps) {
       .then(res => res.json())
       .then(data => setComponents(data.components || []))
       .catch(() => setComponents([]))
+    
+    // Load package count
+    Promise.all([
+      fetch('/package.json').then(res => res.json()).catch(() => ({ dependencies: {}, devDependencies: {} })),
+    ]).then(([pkg]) => {
+      const depCount = Object.keys(pkg.dependencies || {}).length;
+      const devDepCount = Object.keys(pkg.devDependencies || {}).length;
+      setPackageCount(depCount + devDepCount);
+    }).catch(() => setPackageCount(0))
     
     // Dynamically detect pages from the router or file system
     const detectedPages: PageData[] = [
@@ -128,6 +138,29 @@ export function Sidebar({}: SidebarProps) {
               }`} />
               <span className="relative z-10">Overview</span>
               {router.pathname === '/' && (
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 w-2 h-2 bg-white/30 rounded-full animate-pulse"></div>
+              )}
+            </Link>
+          </div>
+
+          {/* Sitemap Link */}
+          <div>
+            <Link 
+              href="/sitemap"
+              className={`flex items-center rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 group relative ${
+                router.pathname === '/sitemap' || router.asPath === '/sitemap'
+                  ? 'bg-gradient-to-r from-slate-500 to-slate-600 text-white shadow-lg shadow-slate-500/25' 
+                  : 'hover:bg-white dark:hover:bg-slate-800 hover:shadow-md text-slate-700 dark:text-slate-300'
+              }`}
+            >
+              {(router.pathname === '/sitemap' || router.asPath === '/sitemap') && (
+                <div className="absolute inset-0 bg-gradient-to-r from-slate-500 to-slate-600 rounded-xl opacity-100"></div>
+              )}
+              <Map className={`mr-3 h-4 w-4 relative z-10 ${
+                router.pathname === '/sitemap' || router.asPath === '/sitemap' ? 'text-white' : 'text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300'
+              }`} />
+              <span className="relative z-10">Sitemap</span>
+              {(router.pathname === '/sitemap' || router.asPath === '/sitemap') && (
                 <div className="absolute right-2 top-1/2 -translate-y-1/2 w-2 h-2 bg-white/30 rounded-full animate-pulse"></div>
               )}
             </Link>
@@ -278,6 +311,15 @@ export function Sidebar({}: SidebarProps) {
                         </div>
                       </div>
                       <span className="ml-3">Packages</span>
+                      {packageCount > 0 && (
+                        <span className={`ml-2 px-2 py-0.5 text-xs rounded-full font-medium ${
+                          hasActivePackage 
+                            ? 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300' 
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-500'
+                        }`}>
+                          {packageCount}
+                        </span>
+                      )}
                     </div>
                     <ChevronRight 
                       className={`h-4 w-4 transition-all duration-200 relative z-10 ${
