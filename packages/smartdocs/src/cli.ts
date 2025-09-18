@@ -8,7 +8,7 @@ import { dev } from "./commands/dev";
 import { check } from "./commands/check";
 
 const program = new Command();
-program.name("smartdocs").description("Smart docs for React/Next").version("0.1.0");
+program.name("smartdocs").description("Smart docs for React/Next").version("0.1.0-beta.0");
 
 program.command("init")
   .description("Create smartdocs.config.ts and scaffold the docs template")

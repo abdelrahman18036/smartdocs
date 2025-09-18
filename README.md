@@ -1,4 +1,4 @@
-# SmartDocs 📚✨
+# SmartDocs 📚✨ (BETA v0.1.0)
 
 > **Auto-generate beautiful documentation for React/Next.js projects with zero configuration**
 
@@ -291,8 +291,8 @@ CMD ["nginx", "-g", "daemon off;"]
 
 ```bash
 # Clone the repo
-git clone https://github.com/your-org/smartdocs-workspace
-cd smartdocs-workspace
+git clone https://github.com/abdelrahman18036/smartdocs
+cd smartdocs
 
 # Install dependencies
 pnpm install
@@ -353,4 +353,4 @@ MIT License - see the [LICENSE](LICENSE) file for details.
 
 **Built with ❤️ for the React community**
 
-[Documentation](https://smartdocs.dev) • [NPM Package](https://www.npmjs.com/package/smartdocs) • [GitHub](https://github.com/your-org/smartdocs)
+[Documentation](https://github.com/abdelrahman18036/smartdocs) • [NPM Package](https://www.npmjs.com/package/smartdocs) • [GitHub](https://github.com/abdelrahman18036/smartdocs)

@@ -1,6 +1,6 @@
 ﻿{
   "name": "smartdocs",
-  "version": "0.1.0",
+  "version": "0.1.0-beta.0",
   "description": "Smart documentation generator for React/Next",
   "type": "module",
   "bin": { "smartdocs": "./dist/cli.js" },
@@ -11,6 +11,14 @@
   "files": ["dist", "templates", "readme.md"],
   "engines": { "node": ">=18" },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/abdelrahman18036/smartdocs"
+  },
+  "homepage": "https://github.com/abdelrahman18036/smartdocs",
+  "bugs": {
+    "url": "https://github.com/abdelrahman18036/smartdocs/issues"
+  },
   "scripts": {
     "build": "tsup src/cli.ts src/config.ts --format esm --dts --out-dir dist",
     "dev": "tsx watch src/cli.ts",

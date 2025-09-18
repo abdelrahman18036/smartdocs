@@ -2,7 +2,7 @@
   "name": "smartdocs-workspace",
   "private": true,
   "packageManager": "pnpm@10.17.0",
-  "version": "0.0.0",
+  "version": "0.0.0-beta.0",
   "description": "Auto-generate beautiful documentation for React/Next.js projects",
   "keywords": [
     "documentation",
@@ -17,7 +17,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/smartdocs-workspace"
+    "url": "https://github.com/abdelrahman18036/smartdocs"
   },
   "author": "SmartDocs Team",
   "license": "MIT",
