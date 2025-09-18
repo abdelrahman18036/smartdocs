@@ -8,7 +8,7 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   return (
-    <div className="relative min-h-screen bg-background flex flex-col">
+    <div className="relative min-h-screen bg-gradient-to-br from-slate-50/50 via-white to-blue-50/30 dark:from-slate-900/50 dark:via-slate-900 dark:to-blue-950/10 flex flex-col">
       <Header />
       <div className="flex flex-1">
         <Sidebar />

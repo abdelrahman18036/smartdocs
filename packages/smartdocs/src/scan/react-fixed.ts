@@ -9,7 +9,7 @@ export type ComponentDoc = {
   displayName: string;
   filePath: string;
   description?: string;
-  type: 'component' | 'hook' | 'page' | 'api' | 'mdx';
+  type: 'component' | 'hook' | 'page' | 'api' | 'service' | 'util' | 'mdx';
   props: Array<{
     name: string; type: string; required: boolean;
     defaultValue?: string; description?: string;
@@ -49,13 +49,491 @@ export type ComponentDoc = {
 const isTs = (f: string) => /\.(ts|tsx)$/.test(f);
 const isJs = (f: string) => /\.(js|jsx)$/.test(f);
 const isMdx = (f: string) => /\.(md|mdx)$/.test(f);
-const isHook = (name: string, file: string) => 
-  name.startsWith('use') || file.includes('/hooks/') || file.includes('\\hooks\\');
-const isPage = (file: string) => 
-  file.includes('/pages/') || file.includes('\\pages\\') || 
-  file.includes('/app/') || file.includes('\\app\\');
+// Content-based type detection (not location-based)
+const isHook = (name: string) => name.startsWith('use');
+
 const isApi = (file: string) => 
   file.includes('/api/') || file.includes('\\api\\');
+
+// Helper function to check if component is referenced in routes/navigation
+const isReferencedInRoutes = async (filePath: string, componentName: string): Promise<boolean> => {
+  try {
+    // Get project root directory
+    const projectRoot = path.dirname(filePath);
+    let currentDir = projectRoot;
+    
+    // Go up directories to find project root (where package.json is)
+    while (currentDir && !await fs.access(path.join(currentDir, 'package.json')).then(() => true).catch(() => false)) {
+      const parentDir = path.dirname(currentDir);
+      if (parentDir === currentDir) break; // reached filesystem root
+      currentDir = parentDir;
+    }
+    
+    // Comprehensive routing/navigation file patterns
+    const routingPatterns = [
+      // Router configuration files
+      '**/*router*',
+      '**/*route*',
+      '**/*routes*',
+      '**/router.{ts,tsx,js,jsx}',
+      '**/routes.{ts,tsx,js,jsx}',
+      '**/routing.{ts,tsx,js,jsx}',
+      // Navigation files
+      '**/*nav*',
+      '**/*navigation*',
+      '**/*menu*',
+      '**/*sidebar*',
+      '**/*header*',
+      '**/*layout*',
+      // Main application files that often contain routing
+      '**/App.{ts,tsx,js,jsx}',
+      '**/app.{ts,tsx,js,jsx}',
+      '**/index.{ts,tsx,js,jsx}',
+      '**/main.{ts,tsx,js,jsx}',
+      // Next.js specific
+      '**/pages/_app.{ts,tsx,js,jsx}',
+      '**/src/app/layout.{ts,tsx,js,jsx}',
+      // Common config files
+      '**/config/**/*.{ts,tsx,js,jsx}',
+      // Any file that might contain navigation links
+      '**/*link*',
+      '**/*breadcrumb*'
+    ];
+    
+    const files = await globby(routingPatterns, { 
+      cwd: currentDir,
+      absolute: true,
+      gitignore: true 
+    });
+    
+    // Search for component references in routing files
+    for (const routeFile of files) {
+      if (routeFile === filePath) continue; // Skip the component file itself
+      
+      try {
+        const content = await fs.readFile(routeFile, 'utf-8');
+        const componentNameVariants = [
+          componentName,
+          componentName.toLowerCase(),
+          componentName.replace(/([A-Z])/g, '-$1').toLowerCase().substring(1), // kebab-case
+          componentName.replace(/([A-Z])/g, '_$1').toLowerCase().substring(1), // snake_case
+        ];
+        
+        // Check for comprehensive route/navigation patterns
+        const isReferenced = componentNameVariants.some(variant => {
+          // Route configuration patterns (React Router)
+          if (content.includes(`component={${componentName}}`) ||
+              content.includes(`component: ${componentName}`) ||
+              content.includes(`element={<${componentName}`) ||
+              content.includes(`element: <${componentName}`) ||
+              content.includes(`Component: ${componentName}`)) {
+            return true;
+          }
+          
+          // Navigation/menu link patterns
+          if (content.includes(`to="/${variant}"`) || content.includes(`to='/${variant}'`) ||
+              content.includes(`href="/${variant}"`) || content.includes(`href='/${variant}'`) ||
+              content.includes(`path="/${variant}"`) || content.includes(`path='/${variant}'`) ||
+              content.includes(`route="/${variant}"`) || content.includes(`route='/${variant}'`)) {
+            return true;
+          }
+          
+          // Precise route assignment patterns - check for actual route definitions
+          
+          // React Router v6/v7: element={<ComponentName />}
+          if (content.includes(`element={<${componentName}`) || 
+              content.includes(`element={ <${componentName}`) ||
+              content.includes(`element={<${componentName}>`)) {
+            return true;
+          }
+          
+          // React Router v5: component={ComponentName}
+          if (content.includes(`component={${componentName}}`) ||
+              content.includes(`component={ ${componentName} }`)) {
+            return true;
+          }
+          
+          // React Router v7: createBrowserRouter patterns
+          if (content.includes('createBrowserRouter') || content.includes('createHashRouter') || content.includes('createMemoryRouter')) {
+            // Check for route object patterns
+            if ((content.includes(`Component: ${componentName}`) ||
+                 content.includes(`component: ${componentName}`) ||
+                 content.includes(`element: <${componentName}`) ||
+                 content.includes(`loader: ${componentName}`) ||
+                 content.includes(`action: ${componentName}`)) &&
+                (content.includes('path:') || content.includes('"path"') || content.includes("'path'"))) {
+              return true;
+            }
+          }
+          
+          // React Router v7: Data Router patterns with loaders/actions
+          if (content.includes(`loader: ${componentName}Loader`) ||
+              content.includes(`action: ${componentName}Action`) ||
+              content.includes(`Component: ${componentName}`) ||
+              content.includes(`ErrorBoundary: ${componentName}Error`)) {
+            return true;
+          }
+          
+          // React Router v7: Route objects in arrays
+          const routeObjectPatterns = [
+            `{ path: `, `{ path:`, `{path:`, `{path: `,
+            `"path": `, `"path":`, `'path': `, `'path':`
+          ];
+          
+          for (const pattern of routeObjectPatterns) {
+            const routeIndex = content.indexOf(pattern);
+            if (routeIndex !== -1) {
+              // Look for component reference within reasonable distance (next 200 chars)
+              const routeSection = content.substring(routeIndex, routeIndex + 200);
+              if (routeSection.includes(componentName) && 
+                  (routeSection.includes('Component') || routeSection.includes('element') || 
+                   routeSection.includes('component') || routeSection.includes('loader'))) {
+                return true;
+              }
+            }
+          }
+          
+          // Special Cases: Framework-specific patterns
+          
+          // Next.js App Router (pages in app directory)
+          if (content.includes(`export default function ${componentName}`) &&
+              (content.includes('page.tsx') || content.includes('page.ts') || 
+               content.includes('page.jsx') || content.includes('page.js'))) {
+            return true;
+          }
+          
+          // Remix patterns
+          if ((content.includes('export const loader') || content.includes('export const action')) &&
+              content.includes(`export default function ${componentName}`)) {
+            return true;
+          }
+          
+          // Vue Router patterns (for multi-framework support)
+          if (content.includes('createRouter') && content.includes('routes') &&
+              (content.includes(`component: ${componentName}`) ||
+               content.includes(`component: () => import`) && content.includes(componentName))) {
+            return true;
+          }
+          
+          // Angular Router patterns (for multi-framework support)
+          if (content.includes('RouterModule') && content.includes('forRoot') &&
+              content.includes(`component: ${componentName}`)) {
+            return true;
+          }
+          
+          // Legacy and edge case patterns
+          if (content.includes(`"${componentName}"`) || content.includes(`'${componentName}'`)) {
+            const lines = content.split('\n');
+            for (let i = 0; i < lines.length; i++) {
+              const line = lines[i].toLowerCase();
+              const componentInLine = line.includes(componentName.toLowerCase());
+              
+              if (componentInLine && (
+                // Route configuration objects
+                (line.includes('path') && (line.includes('component') || line.includes('element'))) ||
+                // Route arrays with component references
+                (line.includes('routes') && line.includes(componentName.toLowerCase())) ||
+                // Switch/Match patterns
+                (line.includes('switch') && line.includes('component')) ||
+                // Dynamic imports in routes
+                (line.includes('import(') && line.includes('route')) ||
+                // Page registry patterns
+                (line.includes('page') && line.includes('route') && line.includes(componentName.toLowerCase()))
+              )) {
+                return true;
+              }
+            }
+          }
+          
+          // Lazy loading patterns
+          if (content.includes(`lazy(() => import('./${variant}')`) ||
+              content.includes(`lazy(() => import('./${componentName}')`) ||
+              content.includes(`loadComponent: () => import('./${variant}')`) ||
+              content.includes(`loadComponent: () => import('./${componentName}')`)) {
+            return true;
+          }
+          
+          // Route guard and wrapper patterns (these actually ARE pages)
+          if ((content.includes(`<PrivateRoute`) && content.includes(componentName)) ||
+              (content.includes(`<PublicRoute`) && content.includes(componentName)) ||
+              (content.includes(`<ProtectedRoute`) && content.includes(componentName)) ||
+              (content.includes(`<AuthRoute`) && content.includes(componentName)) ||
+              (content.includes(`<GuardedRoute`) && content.includes(componentName))) {
+            return true;
+          }
+          
+          // React Router v7 and modern routing special cases
+          
+          // Tanstack Router patterns
+          if (content.includes('@tanstack/react-router') || content.includes('createRouter') ||
+              content.includes('createRoute')) {
+            if (content.includes(`component: ${componentName}`) ||
+                content.includes(`Component: ${componentName}`) ||
+                content.includes(`getComponent: () => ${componentName}`)) {
+              return true;
+            }
+          }
+          
+          // File-based routing patterns (Next.js, Nuxt, SvelteKit, etc.)
+          if ((filePath.includes('/pages/') || filePath.includes('\\pages\\') ||
+               filePath.includes('/routes/') || filePath.includes('\\routes\\') ||
+               filePath.includes('/app/') || filePath.includes('\\app\\')) &&
+              (filePath.endsWith('page.tsx') || filePath.endsWith('page.ts') ||
+               filePath.endsWith('page.jsx') || filePath.endsWith('page.js') ||
+               filePath.endsWith('.page.tsx') || filePath.endsWith('.page.ts') ||
+               filePath.endsWith('.page.jsx') || filePath.endsWith('.page.js') ||
+               filePath.endsWith('route.tsx') || filePath.endsWith('route.ts'))) {
+            return true;
+          }
+          
+          // Reach Router (legacy) patterns
+          if (content.includes('@reach/router') &&
+              (content.includes(`component={${componentName}}`) ||
+               content.includes(`<${componentName} path=`))) {
+            return true;
+          }
+          
+          // React Router v7 Data API patterns
+          if (content.includes('RouterProvider') || content.includes('createBrowserRouter')) {
+            // Check for async component loading patterns
+            if (content.includes(`import('./${componentName}')`) ||
+                content.includes(`import('./${variant}')`) ||
+                content.includes(`() => import(`) && content.includes(componentName)) {
+              return true;
+            }
+            
+            // Check for route handle patterns
+            if (content.includes(`handle: ${componentName}Handle`) ||
+                content.includes(`shouldRevalidate: ${componentName}ShouldRevalidate`)) {
+              return true;
+            }
+          }
+          
+          // Modern meta-framework patterns
+          
+          // Remix v2 patterns  
+          if (content.includes('remix') &&
+              (content.includes(`export { default } from "./${componentName}"`) ||
+               content.includes(`export { ${componentName} as default }`))) {
+            return true;
+          }
+          
+          // SvelteKit patterns (for cross-framework compatibility)
+          if (content.includes('+page.svelte') || content.includes('+layout.svelte')) {
+            return true;
+          }
+          
+          // Astro patterns
+          if (filePath.endsWith('.astro') &&
+              content.includes(`import ${componentName}`) &&
+              content.includes('---')) {
+            return true;
+          }
+          
+          // Additional React Router v7 and edge case patterns
+          
+          // React Router v7 future flags and experimental features
+          if (content.includes('future:') && content.includes('v7_') &&
+              (content.includes(`Component: ${componentName}`) ||
+               content.includes(`element: <${componentName}`))) {
+            return true;
+          }
+          
+          // Route configuration with nested routes
+          if (content.includes('children:') && content.includes('routes') &&
+              content.includes(componentName)) {
+            return true;
+          }
+          
+          // React Router v7 route modules pattern
+          if (content.includes('route.') && 
+              (content.includes(`route.${componentName}`) ||
+               content.includes(`route.component = ${componentName}`) ||
+               content.includes(`route.Component = ${componentName}`))) {
+            return true;
+          }
+          
+          // React Router with TypeScript generic patterns
+          if (content.includes('<Route') && content.includes(componentName) &&
+              (content.includes('RouteObject') || content.includes('RouteConfig'))) {
+            return true;
+          }
+          
+          // Dynamic route segment patterns  
+          if ((content.includes(':id') || content.includes('*') || content.includes('[') || content.includes('{')) &&
+              content.includes(componentName) &&
+              (content.includes('path') || content.includes('route'))) {
+            return true;
+          }
+          
+          // Outlet context patterns (pages that use outlets)
+          if (content.includes('useOutletContext') && content.includes(`<${componentName}`) &&
+              content.includes('Outlet')) {
+            return true;
+          }
+          
+          // Search params and URL state patterns (typically pages)
+          if (content.includes(componentName) &&
+              (content.includes('useSearchParams') || content.includes('URLSearchParams') ||
+               content.includes('useParams') || content.includes('useLocation'))) {
+            return true;
+          }
+          
+          // Special case: Error boundaries that are also pages (use componentName instead of nameLower)
+          const compNameLower = componentName.toLowerCase();
+          if ((compNameLower.includes('error') && compNameLower.includes('page')) ||
+              (compNameLower.includes('notfound') && compNameLower.includes('page')) ||
+              compNameLower === 'errorpage' || compNameLower === 'notfoundpage' ||
+              compNameLower === '404page' || compNameLower === 'error404') {
+            return true;
+          }
+          
+          // Object/array route configurations (moved and enhanced)
+          if ((content.includes(`'${variant}'`) || content.includes(`"${variant}"`)) &&
+              (content.includes(componentName) || content.includes(`<${componentName}`)) &&
+              (content.includes('routes') || content.includes('Routes') || content.includes('navigation'))) {
+            return true;
+          }
+          
+          return false;
+        });
+        
+        if (isReferenced) {
+          return true;
+        }
+      } catch (error) {
+        // Ignore individual file read errors
+        continue;
+      }
+    }
+    
+    return false;
+  } catch (error) {
+    // If there's any error in the route checking, don't fail the whole process
+    return false;
+  }
+};
+
+// Helper function to analyze code content and determine type
+const analyzeCodeContent = async (filePath: string, name: string, code?: string): Promise<'component' | 'hook' | 'service' | 'util' | 'page'> => {
+  // 1. Hook detection - names starting with 'use'
+  if (isHook(name)) {
+    return 'hook';
+  }
+  
+  // 2. Read file content if not provided
+  let fileContent = code;
+  if (!fileContent) {
+    try {
+      fileContent = await fs.readFile(filePath, 'utf-8');
+    } catch (error) {
+      return 'component'; // default fallback
+    }
+  }
+  
+  // 3. Service detection - exports classes/objects with service patterns or API calls
+  if (fileContent.includes('class ') && 
+      (fileContent.includes('Service') || fileContent.includes('API') || fileContent.includes('Client'))) {
+    return 'service';
+  }
+  
+  // 4. Utility detection - helper functions, no JSX/React, pure functions
+  if (name.startsWith('use') && 
+      (fileContent.includes('export const') || fileContent.includes('export default')) &&
+      !fileContent.includes('return <') && !fileContent.includes('JSX.Element')) {
+    return 'hook'; // Custom hooks in utils
+  }
+  
+  // 5. Utility detection - pure utility functions
+  if (!fileContent.includes('JSX') && !fileContent.includes('tsx') && 
+      !fileContent.includes('return <') && !fileContent.includes('React') &&
+      !fileContent.includes('Component') &&
+      (fileContent.includes('export const') || fileContent.includes('export function') || 
+       fileContent.includes('export default function'))) {
+    return 'util';
+  }
+  
+  // 6. Dynamic page detection - purely based on route/navigation usage
+  const nameLower = name.toLowerCase();
+  
+          // Quick exclusions for obvious non-page components
+  const isObviouslyNotPage = 
+    // Infrastructure/utility components that are never pages
+    nameLower.includes('provider') || nameLower.includes('context') ||
+    nameLower === 'router' || nameLower === 'routes' || nameLower === 'routing' ||
+    // Navigation infrastructure components
+    nameLower.includes('navigation') || nameLower.includes('nav') ||
+    nameLower.includes('header') || nameLower.includes('footer') ||
+    nameLower.includes('sidebar') || nameLower.includes('menu') ||
+    nameLower.includes('notification') || nameLower.includes('toast') ||
+    // Layout infrastructure components  
+    nameLower.includes('layout') || nameLower.includes('wrapper') ||
+    nameLower.includes('container') || nameLower === 'app' ||
+    // Form and UI components that are never pages
+    nameLower.includes('button') || nameLower.includes('input') ||
+    nameLower.includes('modal') || nameLower.includes('dialog') ||
+    nameLower.includes('popup') || nameLower.includes('tooltip') ||
+    nameLower.includes('dropdown') || nameLower.includes('select') ||
+    nameLower.includes('checkbox') || nameLower.includes('radio') ||
+    nameLower.includes('slider') || nameLower.includes('toggle') ||
+    // Loading and feedback components
+    nameLower.includes('loading') || nameLower.includes('spinner') ||
+    nameLower.includes('skeleton') || nameLower.includes('progress') ||
+    nameLower.includes('badge') || nameLower.includes('chip') ||
+    nameLower.includes('tag') || nameLower.includes('label') ||
+    // Data display components
+    nameLower.includes('table') || nameLower.includes('list') ||
+    nameLower.includes('card') || nameLower.includes('panel') ||
+    nameLower.includes('accordion') || nameLower.includes('tab') ||
+    nameLower.includes('carousel') || nameLower.includes('gallery') ||
+    // Utility components
+    nameLower.includes('error') || nameLower.includes('fallback') ||
+    nameLower.includes('guard') || nameLower.includes('boundary') ||
+    nameLower.includes('portal') || nameLower.includes('teleport');
+  
+  if (isObviouslyNotPage) {
+    return 'component';
+  }
+  
+  // Special pre-checks before route detection
+  
+  // File-based routing override (Next.js, Nuxt, etc.) - check filename patterns
+  if ((filePath.includes('/pages/') || filePath.includes('\\pages\\') ||
+       filePath.includes('/routes/') || filePath.includes('\\routes\\')) &&
+      (filePath.endsWith('page.tsx') || filePath.endsWith('page.ts') ||
+       filePath.endsWith('page.jsx') || filePath.endsWith('page.js') ||
+       filePath.endsWith('.page.tsx') || filePath.endsWith('.page.ts') ||
+       filePath.endsWith('.page.jsx') || filePath.endsWith('.page.js') ||
+       filePath.endsWith('route.tsx') || filePath.endsWith('route.ts') ||
+       filePath.endsWith('index.tsx') || filePath.endsWith('index.ts'))) {
+    return 'page';
+  }
+  
+  // Special naming patterns that strongly indicate pages
+  if ((nameLower.endsWith('page') || nameLower.endsWith('view') || nameLower.endsWith('screen')) &&
+      (fileContent.includes('export default') || fileContent.includes('export const') || fileContent.includes('export function'))) {
+    // But still check if it's obviously not a page component
+    if (!nameLower.includes('component') && !nameLower.includes('widget') && 
+        !nameLower.includes('element') && !nameLower.includes('item')) {
+      return 'page';
+    }
+  }
+  
+  // Main page detection: Check if component is actually used in routes or navigation
+  const isUsedInRoutes = await isReferencedInRoutes(filePath, name);
+  
+  if (isUsedInRoutes) {
+    return 'page';
+  }
+  
+  // Fallback: Only very explicit page naming when no route reference found
+  if (nameLower.endsWith('page') && fileContent.includes('export default')) {
+    return 'page';
+  }
+  
+  // 7. Everything else is a component (including Context, App, etc.)
+  return 'component';
+};
 
 // Built-in React hooks categorized by their purpose
 const BUILT_IN_HOOKS = {
@@ -113,6 +591,7 @@ export async function scanComponents(patterns: string[]): Promise<ComponentDoc[]
       } else if (isTs(file)) {
         // Enhanced TypeScript parsing with multiple parser configurations
         let parsed: any[] = [];
+        const code = await fs.readFile(file, "utf-8"); // Read content for analysis
         
         try {
           // First try: Default parser
@@ -157,9 +636,8 @@ export async function scanComponents(patterns: string[]): Promise<ComponentDoc[]
 
         for (const p of parsed) {
           const name = p.displayName;
-          const docType = isApi(file) ? 'api' : 
-                         isPage(file) ? 'page' : 
-                         isHook(name, file) ? 'hook' : 'component';
+          // Determine type based on code content, not directory location
+          const docType = isApi(file) ? 'api' : await analyzeCodeContent(file, name, code);
           
           // Enhanced props extraction with safe defaultValue serialization
           const props = Object.entries(p.props ?? {}).map(([propName, pr]: [string, any]) => {
@@ -225,9 +703,8 @@ export async function scanComponents(patterns: string[]): Promise<ComponentDoc[]
 
         for (const c of components) {
           const name = c.displayName || inferNameFromPath(file);
-          const docType = isApi(file) ? 'api' : 
-                         isPage(file) ? 'page' : 
-                         isHook(name, file) ? 'hook' : 'component';
+          // Determine type based on code content, not directory location
+          const docType = isApi(file) ? 'api' : await analyzeCodeContent(file, name, code);
           
           // Extract real usage examples for components or hooks
           const realUsageExamples = docType === 'component' ? 

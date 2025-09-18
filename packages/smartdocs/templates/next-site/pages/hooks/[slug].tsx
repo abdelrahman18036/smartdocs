@@ -238,10 +238,10 @@ export default function HookPage({ component }: HookPageProps) {
                           </span>
                         ))}
                       </div>
-                    </div>
-                  </div>
-                )}
-                
+          </div>
+        </div>
+      )}
+
                 {/* Default Values */}
                 {usage.defaults && Object.keys(usage.defaults).length > 0 && (
                   <div className="space-y-2">
