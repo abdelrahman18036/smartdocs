@@ -95,3 +95,4 @@ temp/
 *.sw?
 /demo
 package-lock.json
+push.md

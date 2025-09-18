@@ -1,13 +1,15 @@
-# Contributing to SmartDocs
+# Contributing to SmartDocs 🧠✨
 
-Thank you for your interest in contributing to SmartDocs! This document provides guidelines and information for contributors.
+Thank you for your interest in contributing to SmartDocs! We're building the most **intelligent documentation tool** for React developers, and your contributions help make it even better.
+
+SmartDocs revolutionizes documentation through advanced code analysis, route-aware detection, component dependency mapping, and beautiful modern UI. This document provides comprehensive guidelines for contributors.
 
 ## 🚀 Quick Start
 
 1. **Fork the repository**
    ```bash
-   git clone https://github.com/your-username/smartdocs-workspace
-   cd smartdocs-workspace
+   git clone https://github.com/your-username/smartdocs
+   cd smartdocs
    ```
 
 2. **Install dependencies**
@@ -23,7 +25,15 @@ Thank you for your interest in contributing to SmartDocs! This document provides
 4. **Test your changes**
    ```bash
    cd packages/smartdocs
-   node dist/cli.js --help
+   npx smartdocs --help
+   ```
+
+5. **Test with demo project**
+   ```bash
+   cd ../../demo/demo-app
+   npx smartdocs init
+   npx smartdocs dev
+   # Visit http://localhost:4400 to see the modern documentation site
    ```
 
 ## 🛠️ Development Setup
@@ -35,32 +45,97 @@ Thank you for your interest in contributing to SmartDocs! This document provides
 
 ### Project Structure
 ```
-smartdocs-workspace/
+smartdocs/
 ├── packages/
-│   └── smartdocs/           # Main package
+│   └── smartdocs/           # 🧠 Main intelligent package
 │       ├── src/
 │       │   ├── cli.ts       # CLI entry point
-│       │   ├── commands/    # Command implementations
-│       │   ├── scan/        # Code scanning logic
-│       │   └── generate/    # Documentation generation
-│       └── templates/       # Site templates
-├── package.json             # Workspace configuration
-├── pnpm-workspace.yaml     # pnpm workspace config
-└── README.md
+│       │   ├── config.ts    # Configuration schema
+│       │   ├── commands/    # 🎯 Smart command implementations
+│       │   │   ├── init.ts    # Intelligent initialization
+│       │   │   ├── build.ts   # Enhanced build process
+│       │   │   ├── dev.ts     # Hot-reload development
+│       │   │   └── check.ts   # Health validation
+│       │   ├── scan/        # 🔍 Advanced code analysis
+│       │   │   ├── react-fixed.ts # Enhanced scanner with route detection
+│       │   │   └── react.ts       # Legacy scanner
+│       │   └── generate/    # 📝 Documentation generation
+│       │       └── mdx.ts     # MDX generation with templates
+│       └── templates/       # 🎨 Modern site templates
+│           └── next-site/     # Beautiful Next.js documentation app
+│               ├── components/  # Enhanced UI components
+│               │   ├── Layout.tsx    # Gradient layouts
+│               │   ├── Sidebar.tsx   # Smart navigation
+│               │   ├── SearchBox.tsx # Fuzzy search
+│               │   └── ComponentsList.tsx # Component listings
+│               ├── pages/      # Documentation pages
+│               │   ├── index.tsx          # Modern overview dashboard
+│               │   ├── sitemap.tsx        # Interactive project tree
+│               │   ├── packages/          # Dependency management
+│               │   ├── components/[slug].tsx # Smart component pages
+│               │   ├── hooks/[slug].tsx      # Hook documentation
+│               │   ├── pages/[slug].tsx      # Page dependency maps
+│               │   └── api/              # Data endpoints
+│               └── styles/     # Modern Tailwind styling
+├── demo/                    # 🧪 Example React application
+│   └── demo-app/
+│       ├── src/
+│       │   ├── components/    # Example components
+│       │   ├── hooks/         # Example hooks  
+│       │   ├── pages/         # Example pages
+│       │   ├── services/      # Example services
+│       │   ├── utils/         # Example utilities
+│       │   └── contexts/      # Example contexts
+│       └── smartdocs.config.ts # Demo configuration
+├── package.json             # 📦 Workspace configuration
+├── pnpm-workspace.yaml      # pnpm workspace config  
+├── README.md                # 📖 Enhanced documentation
+└── CONTRIBUTING.md          # 🤝 This file
 ```
 
 ### Build Process
 ```bash
 # Build all packages
-pnpm -r build
+pnpm build
 
-# Watch mode for development
+# Watch mode for development (with hot reload)
 pnpm -r dev
 
-# Test the CLI
+# Test the CLI with enhanced features
 cd packages/smartdocs
-node dist/cli.js init
+npx smartdocs init
+npx smartdocs build  # Test intelligent scanning
+npx smartdocs dev    # Test modern UI with hot reload
+
+# Test on demo project (comprehensive testing)
+cd ../../demo/demo-app
+npx smartdocs init
+npx smartdocs dev    # See all features: dependency mapping, modern UI, smart categorization
 ```
+
+### Key Development Features to Test
+
+When making changes, ensure these core **intelligent features** work correctly:
+
+🧠 **Smart Code Analysis**
+- Component vs Page vs Hook vs Service detection
+- Route-aware page identification
+- Content-based categorization (not just file paths)
+
+🎯 **Component Dependency Mapping**  
+- Real component usage extraction (not imports)
+- Visual colored dependency cards
+- Usage count accuracy
+
+🎨 **Modern UI Features**
+- Gradient backgrounds and animations
+- Scrollable sidebar with active states
+- Enhanced search with fuzzy matching
+- Responsive mobile design
+
+⚡ **Enhanced Type Display**
+- Complex object parameter breakdown (`{name: "", email: ""}` not `{...}`)
+- Proper array, function, and primitive type display
 
 ## 📝 Making Changes
 
