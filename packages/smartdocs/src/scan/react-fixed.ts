@@ -90,11 +90,9 @@ export async function scanComponents(patterns: string[]): Promise<ComponentDoc[]
 
   // First pass: Find all hook names across all files (including built-in React hooks)
   const allHookNames = await findAllHookNames(files);
-  console.log(`Found ${allHookNames.size} unique hooks:`, Array.from(allHookNames));
   
   // Scan for hook usage across all files
   const hookUsageMap = await scanAllHookUsages(files);
-  console.log(`Found hook usages in ${Object.keys(hookUsageMap).length} different hooks`);
 
   const docs: ComponentDoc[] = [];
   for (const file of files) {
@@ -296,7 +294,6 @@ export async function scanComponents(patterns: string[]): Promise<ComponentDoc[]
 
   // Second pass: Scan specifically for hooks by name across all source files
   for (const hookName of allHookNames) {
-    console.log(`Scanning for hook: ${hookName}`);
     const hookDoc = await scanSpecificHook(hookName, files, hookUsageMap[hookName] || []);
     if (hookDoc) {
       // Check if we already found this hook in the first pass
@@ -788,7 +785,6 @@ async function scanSpecificHook(
     defaults?: Record<string, any>;
   }> = []
 ): Promise<ComponentDoc | null> {
-  console.log(`Looking for hook ${hookName} in ${files.length} files`);
   
   const isBuiltIn = ALL_BUILT_IN_HOOKS.includes(hookName);
   const hookCategory = getHookCategory(hookName);
@@ -818,7 +814,6 @@ async function scanSpecificHook(
       // Check if this file contains the hook definition
       const hookDefRegex = new RegExp(`(?:export\\s+)?(?:function|const)\\s+${hookName}\\b`, 'g');
       if (hookDefRegex.test(content)) {
-        console.log(`Found ${hookName} definition in ${file}`);
         
         const relativePath = path.relative(process.cwd(), file);
         

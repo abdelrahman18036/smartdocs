@@ -1,6 +1,7 @@
 import { GetStaticProps, GetStaticPaths } from 'next'
 import fs from 'fs'
 import path from 'path'
+import Pagination, { usePagination } from '../../components/Pagination'
 
 interface HookPageProps {
   component: any
@@ -147,23 +148,45 @@ export default function HookPage({ component }: HookPageProps) {
       )}
 
       {/* Hook Usage in Codebase - The Main Feature! */}
-      {component.hookUsages && component.hookUsages.length > 0 && (
-        <div className="space-y-6">
-          <h2 className="text-2xl font-semibold flex items-center gap-2">
-            Real Usage in Your Codebase 
-            <span className="bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200 text-sm font-medium px-2 py-1 rounded">
-              {component.hookUsages.length} usage(s) found
-            </span>
-          </h2>
-          
-          {component.hookUsages.map((usage: any, index: number) => (
-            <div key={index} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-6 shadow-sm">
-              <div className="space-y-4">
-                {/* Header with file and location */}
-                <div className="flex flex-wrap items-center gap-4 pb-4 border-b border-slate-200 dark:border-slate-700">
-                  <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
-                    Usage {index + 1}
-                  </h3>
+      {component.hookUsages && component.hookUsages.length > 0 && (() => {
+        const {
+          currentPage,
+          setCurrentPage,
+          itemsPerPage,
+          setItemsPerPage,
+          totalPages,
+          currentItems,
+          totalItems
+        } = usePagination(component.hookUsages || [], 3); // Show 3 usage examples per page
+
+        return (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <h2 className="text-2xl font-semibold flex items-center gap-2">
+                Real Usage in Your Codebase 
+                <span className="bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200 text-sm font-medium px-2 py-1 rounded">
+                  {totalItems} usage(s) found
+                </span>
+              </h2>
+              
+              {totalPages > 1 && (
+                <div className="text-sm text-slate-600 dark:text-slate-400">
+                  Showing {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems}
+                </div>
+              )}
+            </div>
+            
+            {currentItems.map((usage: any, index: number) => {
+              const actualIndex = (currentPage - 1) * itemsPerPage + index + 1;
+              
+              return (
+                <div key={index} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-6 shadow-sm">
+                  <div className="space-y-4">
+                    {/* Header with file and location */}
+                    <div className="flex flex-wrap items-center gap-4 pb-4 border-b border-slate-200 dark:border-slate-700">
+                      <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
+                        Usage {actualIndex}
+                      </h3>
                   <div className="flex items-center gap-2 text-sm">
                     <span className="font-mono bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-slate-600 dark:text-slate-400">
                       📁 {usage.file}
@@ -237,9 +260,24 @@ export default function HookPage({ component }: HookPageProps) {
                 )}
               </div>
             </div>
-          ))}
+            );
+          })}
+          
+          {/* Pagination for usage examples */}
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              itemsPerPage={itemsPerPage}
+              onItemsPerPageChange={setItemsPerPage}
+              totalItems={totalItems}
+              className="mt-8"
+            />
+          )}
         </div>
-      )}
+        );
+      })()}
       
       {/* JSDoc Examples (fallback) */}
       {component.jsdoc?.examples && component.jsdoc.examples.length > 0 && (
