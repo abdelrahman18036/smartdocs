@@ -45,6 +45,125 @@
 body {
   color: hsl(var(--foreground));
   background: hsl(var(--background));
+  font-feature-settings: "rlig" 1, "calt" 1;
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  antialiased: true;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.3);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
+}
+
+/* Text utilities */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+/* Animation utilities */
+.animate-in {
+  animation-duration: 150ms;
+  animation-fill-mode: both;
+}
+
+.fade-in-0 {
+  animation-name: fadeIn;
+}
+
+.zoom-in-95 {
+  animation-name: zoomIn95;
+}
+
+.slide-in-from-bottom-4 {
+  animation-name: slideInFromBottom4;
+}
+
+.slide-in-from-right-4 {
+  animation-name: slideInFromRight4;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes zoomIn95 {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInFromBottom4 {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInFromRight4 {
+  from {
+    opacity: 0;
+    transform: translateX(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .prose {
@@ -71,4 +190,101 @@ body {
 .prose pre code {
   background-color: transparent !important;
   padding: 0;
+}
+
+/* Enhanced table styling */
+.prose table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  margin: 1.5rem 0 !important;
+  border-radius: 0.75rem !important;
+  overflow: hidden !important;
+  border: 1px solid hsl(var(--border)) !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+  background: hsl(var(--background)) !important;
+  display: table !important;
+}
+
+.prose table thead {
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%) !important;
+  border-bottom: 3px solid #1d4ed8 !important;
+}
+
+.prose table thead th {
+  background: transparent !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  text-align: left !important;
+  padding: 1.25rem 1.5rem !important;
+  border-bottom: none !important;
+  font-size: 0.875rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.2) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+.prose table thead th:last-child {
+  border-right: none !important;
+}
+
+.prose table thead th:first-child {
+  border-top-left-radius: 0.75rem !important;
+}
+
+.prose table thead th:last-child {
+  border-top-right-radius: 0.75rem !important;
+}
+
+.prose table tbody tr {
+  border-bottom: 1px solid hsl(var(--border)) !important;
+  transition: all 0.3s ease !important;
+  background: hsl(var(--background)) !important;
+}
+
+.prose table tbody tr:hover {
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.05) 0%, hsl(var(--primary) / 0.02) 100%) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+.prose table tbody tr:last-child {
+  border-bottom: none !important;
+}
+
+.prose table tbody tr:nth-child(even) {
+  background: hsl(var(--muted) / 0.3) !important;
+}
+
+.prose table tbody tr:nth-child(even):hover {
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.08) 0%, hsl(var(--primary) / 0.04) 100%) !important;
+}
+
+.prose table tbody td {
+  padding: 1rem 1.5rem !important;
+  vertical-align: top !important;
+  border-right: 1px solid hsl(var(--border) / 0.3) !important;
+  font-size: 0.9rem !important;
+  color: hsl(var(--foreground)) !important;
+  line-height: 1.6 !important;
+}
+
+.prose table tbody td:last-child {
+  border-right: none !important;
+}
+
+.prose table tbody td:first-child {
+  font-weight: 700 !important;
+  color: hsl(var(--primary)) !important;
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.1) 0%, hsl(var(--primary) / 0.05) 100%) !important;
+  border-right: 2px solid hsl(var(--primary) / 0.3) !important;
+}
+
+/* Code in tables */
+.prose table code {
+  font-size: 0.8rem;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  background-color: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
 }

@@ -45,15 +45,17 @@ async function buildNextSite(siteDir: string, outputDir: string): Promise<void> 
   const { spawn } = await import("node:child_process");
   
   return new Promise((resolve, reject) => {
-    // Check if node_modules exists, if not install dependencies
+    // Always check and ensure dependencies are installed
     const nodeModulesPath = path.join(siteDir, "node_modules");
+    const packageLockPath = path.join(siteDir, "package-lock.json");
     
-    fs.access(nodeModulesPath)
-      .then(() => {
-        // Dependencies exist, proceed with build
-        runNextBuild();
-      })
-      .catch(() => {
+    // Check if dependencies need to be installed
+    Promise.all([
+      fs.access(nodeModulesPath).catch(() => false),
+      fs.access(packageLockPath).catch(() => false)
+    ]).then(([hasNodeModules, hasPackageLock]) => {
+      
+      if (!hasNodeModules || !hasPackageLock) {
         // Install dependencies first
         console.log("📦 Installing dependencies...");
         const install = spawn("npm", ["install"], { 
@@ -62,14 +64,22 @@ async function buildNextSite(siteDir: string, outputDir: string): Promise<void> 
           shell: true 
         });
         
-        install.on("close", (code) => {
+        install.on("close", (code: number | null) => {
           if (code === 0) {
             runNextBuild();
           } else {
             reject(new Error(`npm install failed with code ${code}`));
           }
         });
-      });
+        
+        install.on("error", (err: Error) => {
+          reject(new Error(`Failed to run npm install: ${err.message}`));
+        });
+      } else {
+        // Dependencies exist, proceed with build
+        runNextBuild();
+      }
+    });
     
     function runNextBuild() {
       const build = spawn("npm", ["run", "export"], { 
@@ -79,12 +89,16 @@ async function buildNextSite(siteDir: string, outputDir: string): Promise<void> 
         env: { ...process.env, NODE_ENV: "production" }
       });
       
-      build.on("close", (code) => {
+      build.on("close", (code: number | null) => {
         if (code === 0) {
           resolve();
         } else {
           reject(new Error(`Next.js build failed with code ${code}`));
         }
+      });
+      
+      build.on("error", (err: Error) => {
+        reject(new Error(`Failed to run Next.js build: ${err.message}`));
       });
     }
   });
