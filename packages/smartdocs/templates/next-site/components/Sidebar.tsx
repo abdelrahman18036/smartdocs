@@ -39,13 +39,24 @@ export function Sidebar({}: SidebarProps) {
   const [components, setComponents] = useState<ComponentData[]>([])
   const [pages, setPages] = useState<PageData[]>([])
   const [packageCount, setPackageCount] = useState<number>(0)
+  const [pageCount, setPageCount] = useState<number>(0)
 
   useEffect(() => {
     // Load components data client-side
     fetch('/api/components')
       .then(res => res.json())
-      .then(data => setComponents(data.components || []))
-      .catch(() => setComponents([]))
+      .then(data => {
+        const components = data.components || []
+        setComponents(components)
+        
+        // Count pages
+        const pageComponents = components.filter((c: ComponentData) => c.type === 'page')
+        setPageCount(pageComponents.length)
+      })
+      .catch(() => {
+        setComponents([])
+        setPageCount(0)
+      })
     
     // Load package count
     Promise.all([
@@ -143,24 +154,24 @@ export function Sidebar({}: SidebarProps) {
             </Link>
           </div>
 
-          {/* Sitemap Link */}
+          {/* Sitemap Link - Always Visible */}
           <div>
             <Link 
               href="/sitemap"
               className={`flex items-center rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 group relative ${
-                router.pathname === '/sitemap' || router.asPath === '/sitemap'
-                  ? 'bg-gradient-to-r from-slate-500 to-slate-600 text-white shadow-lg shadow-slate-500/25' 
+                router.pathname === '/sitemap' || router.asPath.startsWith('/sitemap')
+                  ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-lg shadow-indigo-500/25' 
                   : 'hover:bg-white dark:hover:bg-slate-800 hover:shadow-md text-slate-700 dark:text-slate-300'
               }`}
             >
-              {(router.pathname === '/sitemap' || router.asPath === '/sitemap') && (
-                <div className="absolute inset-0 bg-gradient-to-r from-slate-500 to-slate-600 rounded-xl opacity-100"></div>
+              {(router.pathname === '/sitemap' || router.asPath.startsWith('/sitemap')) && (
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-xl opacity-100"></div>
               )}
               <Map className={`mr-3 h-4 w-4 relative z-10 ${
-                router.pathname === '/sitemap' || router.asPath === '/sitemap' ? 'text-white' : 'text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300'
+                router.pathname === '/sitemap' || router.asPath.startsWith('/sitemap') ? 'text-white' : 'text-indigo-500 group-hover:text-indigo-600'
               }`} />
               <span className="relative z-10">Sitemap</span>
-              {(router.pathname === '/sitemap' || router.asPath === '/sitemap') && (
+              {(router.pathname === '/sitemap' || router.asPath.startsWith('/sitemap')) && (
                 <div className="absolute right-2 top-1/2 -translate-y-1/2 w-2 h-2 bg-white/30 rounded-full animate-pulse"></div>
               )}
             </Link>
@@ -171,7 +182,15 @@ export function Sidebar({}: SidebarProps) {
             const typeLabel = type.charAt(0).toUpperCase() + type.slice(1) + 's'
             const hasActiveChild = items.some(item => {
               const expectedPath = `/${type}s/${item.displayName.toLowerCase()}`
-              return router.asPath === expectedPath || router.pathname === expectedPath
+              const currentPath = router.asPath.split('?')[0].split('#')[0] // Remove query params and hash
+              const currentPathname = router.pathname
+              
+              // Check exact match, startsWith for dynamic routes, and slug patterns
+              return currentPath === expectedPath || 
+                     currentPathname === expectedPath ||
+                     currentPath.startsWith(`/${type}s/`) ||
+                     currentPathname.startsWith(`/${type}s/`) ||
+                     (router.query.slug && currentPathname.includes(`/${type}s/[slug]`))
             })
             
             const getSectionColor = (type: string) => {
@@ -209,7 +228,7 @@ export function Sidebar({}: SidebarProps) {
                         ? 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300' 
                         : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-500'
                     }`}>
-                      {items.length}
+                      {type === 'page' && pageCount > 0 ? pageCount : items.length}
                     </span>
                   </div>
                   <ChevronRight 
@@ -225,13 +244,21 @@ export function Sidebar({}: SidebarProps) {
                 <div className={`overflow-hidden transition-all duration-300 ${
                   isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
                 }`}>
-                  <div className="ml-6 space-y-1 border-l-2 border-slate-200 dark:border-slate-700 pl-4 relative">
+                  <div className={`ml-6 border-l-2 border-slate-200 dark:border-slate-700 pl-4 relative ${
+                    items.length > 5 ? 'max-h-72 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600 hover:scrollbar-thumb-slate-400 dark:hover:scrollbar-thumb-slate-500' : 'space-y-1'
+                  }`}>
                     {hasActiveChild && (
                       <div className={`absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b ${getSectionColor(type)} rounded-full`}></div>
                     )}
-                    {items.map((item) => {
-                      const href = `/${type}s/${item.displayName.toLowerCase()}`
-                      const isActive = router.asPath === href || router.pathname === href
+                    <div className="space-y-1 py-1">
+                      {items.map((item) => {
+                        const href = `/${type}s/${item.displayName.toLowerCase()}`
+                        const currentPath = router.asPath.split('?')[0].split('#')[0]
+                        const currentPathname = router.pathname
+                        const isActive = currentPath === href || 
+                                        currentPathname === href ||
+                                        (router.query.slug && router.query.slug === item.displayName.toLowerCase() && 
+                                         currentPathname.includes(`/${type}s/[slug]`))
                       
                       return (
                         <Link
@@ -278,6 +305,21 @@ export function Sidebar({}: SidebarProps) {
                         </Link>
                       )
                     })}
+                    {items.length > 5 && (
+                      <div className="text-center py-2">
+                        <div className="text-xs text-slate-400 dark:text-slate-600 font-medium">
+                          {items.length - 5}+ more • Scroll to view
+                        </div>
+                        <div className="flex justify-center mt-1">
+                          <div className="flex space-x-1">
+                            <div className="w-1 h-1 bg-slate-300 dark:bg-slate-600 rounded-full animate-pulse"></div>
+                            <div className="w-1 h-1 bg-slate-300 dark:bg-slate-600 rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>
+                            <div className="w-1 h-1 bg-slate-300 dark:bg-slate-600 rounded-full animate-pulse" style={{animationDelay: '0.4s'}}></div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    </div>
                   </div>
                 </div>
               </div>
