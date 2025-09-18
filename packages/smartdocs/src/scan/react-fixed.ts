@@ -560,7 +560,38 @@ function getHookCategory(hookName: string): ComponentDoc['hookCategory'] {
 }
 
 export async function scanComponents(patterns: string[]): Promise<ComponentDoc[]> {
-  const files = await globby(patterns, { gitignore: true, absolute: true });
+  const files = await globby(patterns, { 
+    gitignore: true, 
+    absolute: true,
+    ignore: [
+      // Common config files
+      '**/*.config.{js,ts,mjs,cjs}',
+      '**/*.conf.{js,ts}',
+      '**/config/**/*',
+      // Build tools
+      '**/webpack.config.*',
+      '**/vite.config.*', 
+      '**/rollup.config.*',
+      '**/babel.config.*',
+      '**/jest.config.*',
+      // Linting and formatting
+      '**/eslint.config.*',
+      '**/.eslintrc.*',
+      '**/prettier.config.*',
+      // CSS/Style tools
+      '**/tailwind.config.*',
+      '**/postcss.config.*',
+      // Testing
+      '**/test-*.{js,ts}',
+      '**/*.test.{js,ts,tsx,jsx}',
+      '**/*.spec.{js,ts,tsx,jsx}',
+      '**/__tests__/**/*',
+      // Misc
+      '**/setup*.{js,ts}',
+      '**/index.d.ts',
+      '**/*.d.ts'
+    ]
+  });
   
   // Find all story files for examples
   const storyFiles = await globby(['**/*.stories.{js,jsx,ts,tsx}'], { gitignore: true, absolute: true });
@@ -628,7 +659,6 @@ export async function scanComponents(patterns: string[]): Promise<ComponentDoc[]
               // Third try: Simple parse without options
               parsed = reactDocgenTs.parse(file);
             } catch (error3) {
-              console.warn(`Failed to parse TypeScript file ${file}:`, error3);
               continue;
             }
           }
@@ -699,7 +729,44 @@ export async function scanComponents(patterns: string[]): Promise<ComponentDoc[]
         }
       } else if (isJs(file)) {
         const code = await fs.readFile(file, "utf-8");
-        const components = parseJsx(code);
+        
+        // Skip config files and other non-component JavaScript files
+        const filename = path.basename(file).toLowerCase();
+        const isConfigFile = filename.includes('.config.') || 
+                            filename.includes('.conf.') || 
+                            filename.startsWith('config') ||
+                            filename.includes('tailwind') ||
+                            filename.includes('postcss') ||
+                            filename.includes('eslint') ||
+                            filename.includes('babel') ||
+                            filename.includes('webpack') ||
+                            filename.includes('vite') ||
+                            filename.includes('test');
+        
+        if (isConfigFile) {
+          continue;
+        }
+        
+        // Quick content check - skip files that don't look like React components
+        if (!code.includes('React') && 
+            !code.includes('export') && 
+            !code.includes('function') && 
+            !code.includes('const') && 
+            !code.includes('class')) {
+          continue;
+        }
+        
+        let components: any[] = [];
+        try {
+          components = parseJsx(code);
+        } catch (error: any) {
+          // Skip files that can't be parsed as React components
+          if (error.code === 'ERR_REACTDOCGEN_MISSING_DEFINITION') {
+            continue;
+          } else {
+            continue;
+          }
+        }
 
         for (const c of components) {
           const name = c.displayName || inferNameFromPath(file);
@@ -765,7 +832,6 @@ export async function scanComponents(patterns: string[]): Promise<ComponentDoc[]
       }
     } catch (error) {
       // ignore non-components/parse errors and continue
-      console.warn(`Failed to process file ${file}:`, error);
     }
   }
 
@@ -1000,7 +1066,6 @@ async function extractRealUsageExamples(componentName: string): Promise<string[]
     return uniqueExamples.slice(0, 3);
 
   } catch (error) {
-    console.warn(`Failed to extract real usage examples for ${componentName}:`, error instanceof Error ? error.message : error);
     return [];
   }
 }
@@ -1085,7 +1150,6 @@ async function extractHookUsageExamples(hookName: string): Promise<string[]> {
     return uniqueExamples.slice(0, 3);
 
   } catch (error) {
-    console.warn(`Failed to extract hook usage examples for ${hookName}:`, error instanceof Error ? error.message : error);
     return [];
   }
 }
@@ -1198,7 +1262,6 @@ async function extractHookSignature(filePath: string, hookName: string): Promise
     return hookInfo;
 
   } catch (error) {
-    console.warn(`Failed to extract hook signature for ${hookName}:`, error instanceof Error ? error.message : error);
     return {
       signature: '',
       parameters: [],
@@ -1402,21 +1465,72 @@ async function scanAllHookUsages(files: string[]): Promise<Record<string, Array<
                   ).filter(Boolean) || [];
                 }
                 
-                // Extract parameters
+                // Extract parameters with better type representation
                 const parameters = declaration.init.arguments?.map((arg: any) => {
-                  if (arg.type === 'Literal') return arg.value;
-                  if (arg.type === 'Identifier') return arg.name;
-                  if (arg.type === 'ObjectExpression') {
-                    const obj: any = {};
-                    arg.properties?.forEach((prop: any) => {
-                      if (prop.key && prop.value) {
-                        obj[prop.key.name || prop.key.value] = 
-                          prop.value.value || prop.value.name || '[complex]';
-                      }
-                    });
-                    return obj;
+                  if (arg.type === 'Literal') {
+                    if (typeof arg.value === 'boolean') return arg.value;
+                    if (typeof arg.value === 'string') return `"${arg.value}"`;
+                    if (typeof arg.value === 'number') return arg.value;
+                    return arg.value;
                   }
-                  return '[complex]';
+                  if (arg.type === 'Identifier') {
+                    return arg.name;
+                  }
+                  if (arg.type === 'ArrayExpression') {
+                    if (arg.elements && arg.elements.length <= 3) {
+                      const elements = arg.elements.map((el: any) => {
+                        if (el === null) return 'null';
+                        if (el.type === 'Literal') return el.value;
+                        if (el.type === 'Identifier') return el.name;
+                        return '{...}';
+                      });
+                      return `[${elements.join(', ')}]`;
+                    }
+                    return '[...]';
+                  }
+                  if (arg.type === 'ObjectExpression') {
+                    if (arg.properties && arg.properties.length <= 8) { // Increased limit to show more properties
+                      const props = arg.properties.map((prop: any) => {
+                        const key = prop.key?.name || prop.key?.value || 'key';
+                        if (prop.value?.type === 'Literal') {
+                          const val = prop.value.value;
+                          if (typeof val === 'string') return `${key}: "${val}"`;
+                          return `${key}: ${val}`;
+                        } else if (prop.value?.type === 'Identifier') {
+                          return `${key}: ${prop.value.name}`;
+                        } else if (prop.value?.type === 'ArrayExpression') {
+                          if (prop.value.elements && prop.value.elements.length <= 3) {
+                            const els = prop.value.elements.map((el: any) => el?.value || el?.name || 'item').join(', ');
+                            return `${key}: [${els}]`;
+                          }
+                          return `${key}: [...]`;
+                        }
+                        return `${key}: ${prop.value?.value || prop.value?.name || '...'}`;
+                      });
+                      return `{${props.join(', ')}}`;
+                    } else if (arg.properties && arg.properties.length > 8) {
+                      // Show first few properties and indicate there are more
+                      const firstProps = arg.properties.slice(0, 3).map((prop: any) => {
+                        const key = prop.key?.name || prop.key?.value || 'key';
+                        if (prop.value?.type === 'Literal') {
+                          const val = prop.value.value;
+                          if (typeof val === 'string') return `${key}: "${val}"`;
+                          return `${key}: ${val}`;
+                        }
+                        return `${key}: ${prop.value?.value || prop.value?.name || '...'}`;
+                      });
+                      return `{${firstProps.join(', ')}, +${arg.properties.length - 3} more}`;
+                    }
+                    return '{...}';
+                  }
+                  if (arg.type === 'ArrowFunctionExpression' || arg.type === 'FunctionExpression') {
+                    return '() => {...}';
+                  }
+                  if (arg.type === 'CallExpression' && arg.callee?.name) {
+                    return `${arg.callee.name}(...)`;
+                  }
+                  // For any other type, return a more meaningful representation
+                  return arg.name || `{${arg.type}}`;
                 }) || [];
                 
                 hookUsageMap[hookName].push({
@@ -1482,10 +1596,47 @@ function extractDefaults(parameters: any[]): Record<string, any> {
   const defaults: Record<string, any> = {};
   
   parameters.forEach((param, index) => {
-    if (param && typeof param === 'object' && !(param instanceof Array)) {
-      Object.assign(defaults, param);
-    } else if (param !== undefined && param !== '[complex]') {
-      defaults[`param${index}`] = param;
+    if (typeof param === 'string' && param.startsWith('{') && param.endsWith('}')) {
+      // Parse object-like strings
+      try {
+        const cleanParam = param.slice(1, -1); // Remove { and }
+        if (cleanParam.includes(':')) {
+          const pairs = cleanParam.split(', ');
+          pairs.forEach(pair => {
+            const colonIndex = pair.indexOf(': ');
+            if (colonIndex > 0) {
+              const key = pair.substring(0, colonIndex).trim();
+              const value = pair.substring(colonIndex + 2).trim();
+              defaults[key] = value;
+            }
+          });
+        } else {
+          // If it's just {...} or something like that
+          defaults[`initialState`] = param;
+        }
+      } catch {
+        defaults[`initialState`] = param;
+      }
+    } else if (typeof param === 'string' && param.startsWith('[') && param.endsWith(']')) {
+      // Handle arrays
+      defaults['initialArray'] = param;
+    } else if (typeof param === 'string' && param === '() => {...}') {
+      // Handle functions
+      defaults['callback'] = 'function';
+    } else if (param !== undefined && param !== null) {
+      // For primitives and other types, use descriptive names based on common patterns
+      if (typeof param === 'boolean') {
+        defaults['initialValue'] = param;
+      } else if (typeof param === 'number') {
+        defaults['initialCount'] = param;
+      } else if (typeof param === 'string' && param.startsWith('"') && param.endsWith('"')) {
+        defaults['initialText'] = param;
+      } else if (typeof param === 'string') {
+        // Variable names or other identifiers
+        defaults['variable'] = param;
+      } else {
+        defaults[`param${index}`] = param;
+      }
     }
   });
   
