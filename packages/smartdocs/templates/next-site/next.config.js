@@ -12,12 +12,7 @@ const nextConfig = {
   trailingSlash: true,
   images: {
     unoptimized: true
-  },
-  // Only enable export mode for production builds
-  ...(process.env.NODE_ENV === 'production' && {
-    output: 'export',
-    distDir: '../smartdocs-dist',
-  })
+  }
 }
 
 module.exports = withMDX(nextConfig)

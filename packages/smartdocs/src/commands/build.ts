@@ -82,7 +82,7 @@ async function buildNextSite(siteDir: string, outputDir: string): Promise<void> 
     });
     
     function runNextBuild() {
-      const build = spawn("npm", ["run", "export"], { 
+      const build = spawn("npm", ["run", "build"], { 
         cwd: siteDir, 
         stdio: "inherit",
         shell: true,
