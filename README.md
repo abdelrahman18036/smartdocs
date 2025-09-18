@@ -1,35 +1,49 @@
 # SmartDocs 📚✨ (BETA v0.1.0)
 
-> **Auto-generate beautiful documentation for React/Next.js projects with zero configuration**
+> **Auto-generate beautiful, intelligent documentation for React/Next.js projects with zero configuration**
 
 [![npm version](https://badge.fury.io/js/smartdocs.svg)](https://www.npmjs.com/package/smartdocs)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 
-SmartDocs automatically scans your React/Next.js codebase and generates a beautiful, searchable documentation site. It extracts props, types, JSDoc comments, and examples from Storybook stories to create comprehensive documentation with zero manual work.
+SmartDocs revolutionizes documentation by intelligently scanning your React/Next.js codebase and generating a comprehensive, modern documentation site. It uses advanced content analysis and route detection to automatically categorize components, hooks, pages, services, and utilities while extracting detailed prop information, types, JSDoc comments, and component relationships.
 
 ## ✨ Features
 
-🔍 **Smart Scanning**
-- React components, hooks, pages, and API routes
-- Automatic prop extraction with types and defaults
-- JSDoc comment parsing (`@param`, `@returns`, `@example`)
-- Storybook story examples integration
-- MDX file processing
+🧠 **Intelligent Code Analysis**
+- **Smart Categorization**: Content-based detection of components, hooks, pages, services, utilities, and contexts
+- **Route-Aware Page Detection**: Uses actual routing patterns (React Router, Next.js, etc.) to identify real pages
+- **Component Dependency Mapping**: Shows which components/hooks each page uses with visual relationships
+- **Advanced Type Extraction**: Displays complex object parameters with actual properties instead of `{...}`
+- **Cross-Reference Analysis**: Tracks component usage patterns across your entire codebase
 
-🎨 **Beautiful Documentation Site**
-- Modern Next.js-based documentation site
-- Real-time search with fuzzy matching
-- Dark/light theme support
-- Responsive design with mobile-friendly sidebar
-- Automatic categorization by type
+🔍 **Comprehensive Scanning**
+- **Full Project Coverage**: Scans entire project with intelligent exclusion of config files and build artifacts
+- **Multi-Framework Support**: React Router v7, Tanstack Router, Next.js, Remix, and more
+- **Automatic Prop Extraction**: Types, defaults, and JSDoc comments with enhanced object parsing
+- **Storybook Integration**: Examples from your existing stories
+- **MDX File Processing**: Custom documentation pages
 
-⚡ **Developer Experience**
-- Single command setup: `npx smartdocs init`
-- Hot-reload development server
-- File watching with instant updates
-- Static export ready for deployment
-- TypeScript support throughout
+🎨 **Modern Documentation Site**
+- **Beautiful UI**: Modern gradient backgrounds, animated elements, and responsive design
+- **Component Visualization**: Interactive colored cards showing component relationships and usage counts
+- **Enhanced Navigation**: Scrollable sidebar with active states, package counts, and visual indicators
+- **Advanced Search**: Real-time fuzzy matching with comprehensive filtering
+- **Interactive Sitemap**: File tree view of your entire project structure
+- **Dark/Light Themes**: Complete theme support with smooth transitions
+
+📊 **Rich Analytics & Insights**
+- **Dependency Tracking**: Visual package dependency management with categorization
+- **Usage Statistics**: See how often components are used across pages
+- **Component Health**: Identify unused components and dependencies
+- **Project Overview**: Dashboard with quick stats and navigation shortcuts
+
+⚡ **Superior Developer Experience**
+- **Zero Configuration**: Works out of the box with intelligent defaults
+- **Lightning Fast**: Optimized scanning with smart caching and error handling
+- **Hot Reload**: Instant updates during development with file watching
+- **Static Export**: Deploy anywhere with pre-built static sites
+- **TypeScript First**: Full TypeScript support with enhanced type display
 
 ## 🚀 Quick Start
 
@@ -40,8 +54,8 @@ npx smartdocs init
 ```
 
 This creates:
-- `smartdocs.config.ts` - Configuration file
-- `.smartdocs/site/` - Documentation site template
+- `smartdocs.config.ts` - **Intelligent configuration** with comprehensive scanning
+- `.smartdocs/site/` - **Modern documentation site** template
 
 ### 2. Generate Documentation
 
@@ -49,15 +63,20 @@ This creates:
 npx smartdocs build
 ```
 
-Scans your project → Generates MDX → Builds static site → Outputs to `smartdocs-dist/`
+**Smart Process**: Scans entire project → Analyzes routes & dependencies → Generates enhanced MDX → Builds modern static site → Outputs to `smartdocs-dist/`
 
-### 3. Development Mode
+### 3. Development Mode  
 
 ```bash
 npx smartdocs dev
 ```
 
-Starts development server at http://localhost:4400 with hot-reload
+Starts development server at http://localhost:4400 with:
+- 🔥 **Hot-reload** for instant updates
+- 🎨 **Modern UI** with beautiful gradients and animations  
+- 📊 **Component dependency maps** showing relationships
+- 🔍 **Enhanced search** with fuzzy matching
+- 📱 **Mobile-responsive** design
 
 ## 📋 Commands
 
@@ -70,6 +89,8 @@ Starts development server at http://localhost:4400 with hot-reload
 
 ## ⚙️ Configuration
 
+SmartDocs works with **zero configuration** but can be customized for advanced use cases.
+
 `smartdocs.config.ts`:
 
 ```typescript
@@ -77,17 +98,34 @@ import { defineConfig } from "smartdocs/config";
 
 export default defineConfig({
   projectName: "My Awesome App",
-  entryPaths: ["src/**/*.{ts,tsx,js,jsx}"],
-  include: [
-    "src/components/**",
-    "src/hooks/**", 
-    "app/**",
-    "pages/**"
-  ],
+  entryPaths: ["**/*.{ts,tsx,js,jsx}"], // Scan entire project
+  include: ["./**"], // Include everything by default
   exclude: [
+    // Build artifacts and dependencies
+    "node_modules/**",
+    "dist/**", 
+    "build/**",
+    ".next/**",
+    "out/**",
+    // Configuration files
+    "**/*.config.{js,ts,mjs,cjs}",
+    "**/vite.config.*",
+    "**/webpack.config.*",
+    "**/rollup.config.*",
+    "**/jest.config.*",
+    "**/cypress.config.*",
+    // Test and story files
     "**/__tests__/**",
+    "**/*.test.{js,ts,jsx,tsx}",
+    "**/*.spec.{js,ts,jsx,tsx}",
     "**/*.stories.*",
-    "node_modules/**"
+    // Hidden files and directories
+    "**/.*/**",
+    "**/.git/**",
+    // Documentation and readme files
+    "**/*.md",
+    "**/LICENSE*",
+    "**/CHANGELOG*"
   ],
   outDir: ".smartdocs",
   siteOutDir: "smartdocs-dist",
@@ -103,13 +141,23 @@ export default defineConfig({
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `projectName` | `string` | `"My Project"` | Name displayed in documentation |
-| `entryPaths` | `string[]` | `["src/**/*.{ts,tsx,js,jsx}"]` | Glob patterns for scanning |
-| `include` | `string[]` | `["src/**", "app/**", "pages/**"]` | Directories to include |
-| `exclude` | `string[]` | `["**/__tests__/**", "**/*.stories.*", "node_modules/**"]` | Patterns to exclude |
+| `entryPaths` | `string[]` | `["**/*.{ts,tsx,js,jsx}"]` | Glob patterns for scanning (now covers entire project) |
+| `include` | `string[]` | `["./**"]` | Directories to include (comprehensive by default) |
+| `exclude` | `string[]` | `[...extensive list]` | Intelligent exclusion of config, test, and build files |
 | `outDir` | `string` | `".smartdocs"` | Output directory for generated files |
 | `siteOutDir` | `string` | `"smartdocs-dist"` | Static site output directory |
 | `parse.tsx` | `boolean` | `true` | Enable TypeScript JSX parsing |
 | `parse.jsx` | `boolean` | `true` | Enable JavaScript JSX parsing |
+
+### Intelligent Scanning
+
+SmartDocs automatically:
+- **🎯 Detects Components** based on JSX usage and React patterns
+- **🪝 Identifies Hooks** using naming conventions (`use*`) and React hook calls
+- **📄 Recognizes Pages** through route analysis and navigation patterns  
+- **⚙️ Finds Services** via class definitions and service patterns
+- **🛠️ Discovers Utilities** through pure function analysis
+- **🌐 Maps Contexts** using React Context API patterns
 
 ## 📖 What Gets Documented
 
@@ -176,6 +224,64 @@ export default function Dashboard() {
 
 ## 🎯 Advanced Features
 
+### Component Dependency Visualization
+
+SmartDocs creates **interactive dependency maps** showing which components and hooks each page uses:
+
+```tsx
+// ContactPage.tsx - SmartDocs automatically detects:
+import { Button } from '../components/Button';
+import { Input } from '../components/Input';  
+import { useFormValidator } from '../hooks/useFormValidator';
+
+export default function ContactPage() {
+  const validator = useFormValidator(); // ✅ Detected as hook usage
+  
+  return (
+    <form>
+      <Input type="email" />      {/* ✅ Detected as component usage */}
+      <Button type="submit">      {/* ✅ Detected as component usage */}
+        Submit
+      </Button>
+    </form>
+  );
+}
+```
+
+**Result**: ContactPage documentation shows:
+- 📦 **2 Components Used**: Button, Input (with usage counts and code examples)  
+- 🪝 **1 Hook Used**: useFormValidator (with parameters and return values)
+- 🔗 **Direct Navigation Links** to each component's full documentation
+
+### Enhanced Type Extraction
+
+Complex objects and parameters are displayed with **full property breakdowns**:
+
+```tsx
+// Before: useState({...})                    ❌ Not helpful
+// After:  useState({                         ✅ Crystal clear!
+//   name: "",
+//   email: "", 
+//   company: "",
+//   newsletter: false,
+//   +2 more properties
+// })
+```
+
+### Intelligent Route Detection
+
+SmartDocs analyzes your **actual routing configuration** to distinguish pages from components:
+
+```tsx
+// ✅ Correctly identified as PAGE (used in routes)
+<Route path="/dashboard" element={<Dashboard />} />
+
+// ✅ Correctly identified as COMPONENT (not in routes) 
+<Navigation />  // Used in layout, not a route
+```
+
+Supports all major routing libraries: React Router v7, Tanstack Router, Next.js App Router, Remix, and more.
+
 ### Storybook Integration
 
 SmartDocs automatically finds and includes examples from your Storybook stories:
@@ -237,19 +343,74 @@ your-project/
 ├── smartdocs.config.ts          # Configuration
 ├── .smartdocs/
 │   ├── content/                 # Generated MDX files
-│   │   ├── components/          # Component docs
-│   │   ├── hooks/              # Hook docs
-│   │   ├── pages/              # Page docs
-│   │   └── search.json         # Search index
-│   └── site/                   # Next.js app
-│       ├── components/         # Site components
-│       ├── pages/             # Site pages
-│       └── styles/            # Styling
-└── smartdocs-dist/             # Static export (deploy this!)
-    ├── index.html
-    ├── _next/
-    └── ...
+│   │   ├── components/          # Component documentation
+│   │   ├── hooks/              # Custom hook documentation  
+│   │   ├── pages/              # Page documentation with dependency maps
+│   │   ├── services/           # Service class documentation
+│   │   ├── utils/              # Utility function documentation
+│   │   ├── contexts/           # React Context documentation
+│   │   ├── apis/               # API route documentation
+│   │   └── search.json         # Enhanced search index
+│   └── site/                   # Modern Next.js documentation app
+│       ├── components/         # Enhanced UI components
+│       │   ├── Layout.tsx      # Gradient layouts and modern styling
+│       │   ├── Sidebar.tsx     # Scrollable nav with active states
+│       │   └── SearchBox.tsx   # Advanced fuzzy search
+│       ├── pages/             # Documentation pages
+│       │   ├── index.tsx       # Beautiful overview dashboard
+│       │   ├── sitemap.tsx     # Interactive project tree
+│       │   ├── dependencies.tsx # Visual package management
+│       │   └── [slug].tsx      # Smart component pages
+│       └── styles/            # Modern Tailwind styling
+└── smartdocs-dist/             # Static export (deploy anywhere!)
+    ├── index.html              # Modern responsive design
+    ├── _next/                  # Optimized assets
+    └── sitemap.xml             # SEO-friendly sitemap
 ```
+
+### Documentation Categories
+
+SmartDocs automatically organizes your code into intelligent categories:
+
+| Category | Icon | Detection Method | Examples |
+|----------|------|------------------|----------|
+| **Components** | 🧩 | JSX usage, React patterns | `Button.tsx`, `Modal.jsx`, `Layout.tsx` |
+| **Hooks** | 🪝 | `use*` naming, React hook calls | `useAuth.ts`, `useLocalStorage.js` |
+| **Pages** | 📄 | Route analysis, navigation patterns | `Dashboard.tsx`, `LoginPage.jsx` |
+| **Services** | ⚙️ | Class definitions, service patterns | `ApiService.ts`, `AuthService.js` |
+| **Utils** | 🛠️ | Pure functions, helper methods | `formatDate.ts`, `validators.js` |  
+| **Contexts** | 🌐 | React Context API usage | `AuthContext.tsx`, `ThemeProvider.jsx` |
+| **APIs** | 🌍 | Next.js API routes, endpoints | `api/users.ts`, `api/auth/login.js` |
+
+## 🎨 Modern Documentation Experience
+
+### 🌟 Beautiful Overview Dashboard
+- **Hero Section**: Animated gradient backgrounds with floating elements
+- **Quick Stats**: Live counts of components, hooks, pages, and dependencies  
+- **Feature Showcase**: Highlight key capabilities with modern cards
+- **Quick Actions**: Direct navigation to different documentation sections
+
+### 🧭 Enhanced Navigation
+- **Smart Sidebar**: Scrollable sections (5 visible + scroll for more)
+- **Active States**: Visual indicators for current page and parent sections
+- **Package Counts**: Live dependency tracking in navigation
+- **Interactive Sitemap**: File tree view of entire project structure
+
+### 📊 Component Relationship Mapping
+- **Dependency Cards**: Beautiful colored rectangles showing component usage
+- **Usage Statistics**: See how often each component/hook is used
+- **Code Examples**: First usage context for each dependency
+- **Direct Links**: Navigate immediately to full component documentation
+
+### 🎯 Advanced Search & Filtering
+- **Fuzzy Search**: Find anything across your entire documentation
+- **Category Filtering**: Filter by components, hooks, pages, etc.
+- **Real-time Results**: Instant search with smart ranking
+
+### 📱 Responsive Design
+- **Mobile-First**: Optimized for all screen sizes
+- **Touch-Friendly**: Smooth interactions on mobile devices
+- **Progressive Enhancement**: Works offline after initial load
 
 ## 🚀 Deployment
 
@@ -313,18 +474,43 @@ packages/
 └── smartdocs/
     ├── src/
     │   ├── cli.ts              # CLI entry point
-    │   ├── config.ts           # Configuration schema
+    │   ├── config.ts           # Configuration schema  
     │   ├── commands/           # CLI commands
-    │   │   ├── init.ts         # Initialize command
-    │   │   ├── build.ts        # Build command
-    │   │   ├── dev.ts          # Development command
-    │   │   └── check.ts        # Validation command
-    │   ├── scan/               # Code scanning
-    │   │   └── react.ts        # React component scanner
+    │   │   ├── init.ts         # Initialize with smart defaults
+    │   │   ├── build.ts        # Intelligent build process
+    │   │   ├── dev.ts          # Hot-reload development
+    │   │   └── check.ts        # Validation and health checks
+    │   ├── scan/               # Advanced code analysis
+    │   │   ├── react-fixed.ts  # Enhanced React scanner with route detection
+    │   │   └── react.ts        # Legacy React scanner
     │   └── generate/           # Documentation generation
-    │       └── mdx.ts          # MDX file generator
+    │       └── mdx.ts          # MDX file generator with templates
     └── templates/
-        └── next-site/          # Next.js documentation template
+        └── next-site/          # Modern documentation site template
+            ├── components/     # Enhanced UI components
+            │   ├── Layout.tsx      # Gradient layouts
+            │   ├── Sidebar.tsx     # Smart navigation
+            │   ├── SearchBox.tsx   # Fuzzy search
+            │   └── ComponentsList.tsx # Component listings
+            ├── pages/          # Documentation pages
+            │   ├── index.tsx       # Modern overview
+            │   ├── sitemap.tsx     # Project tree view
+            │   ├── packages/       # Dependency management
+            │   ├── components/[slug].tsx # Smart component pages
+            │   ├── hooks/[slug].tsx     # Hook documentation
+            │   ├── pages/[slug].tsx     # Page dependency maps
+            │   └── api/        # Data endpoints
+            └── styles/         # Modern Tailwind styling
+demo/
+└── demo-app/               # Example React application
+    ├── src/
+    │   ├── components/     # Example components
+    │   ├── hooks/          # Example hooks
+    │   ├── pages/          # Example pages
+    │   ├── services/       # Example services
+    │   ├── utils/          # Example utilities
+    │   └── contexts/       # Example contexts
+    └── smartdocs.config.ts # Demo configuration
 ```
 
 ## 🤝 Contributing
@@ -341,16 +527,34 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 MIT License - see the [LICENSE](LICENSE) file for details.
 
+## ⭐ What Makes SmartDocs Special
+
+- **🧠 Truly Intelligent**: Goes beyond simple file scanning to understand your app's architecture
+- **🎯 Zero False Positives**: Advanced route detection prevents misclassification of components as pages
+- **📊 Relationship Mapping**: See exactly how your components interact and depend on each other
+- **🎨 Modern & Beautiful**: Not just functional—your documentation will be a joy to use
+- **⚡ Enterprise Ready**: Scales from small projects to large monorepos with thousands of components
+- **🔄 Live Updates**: Documentation stays in sync with your code automatically
+
 ## 🙏 Acknowledgments
 
 - [react-docgen-typescript](https://github.com/styleguidist/react-docgen-typescript) - TypeScript component parsing
-- [react-docgen](https://github.com/reactjs/react-docgen) - JavaScript component parsing
+- [react-docgen](https://github.com/reactjs/react-docgen) - JavaScript component parsing  
 - [Next.js](https://nextjs.org/) - Documentation site framework
-- [Tailwind CSS](https://tailwindcss.com/) - Styling
-- [Fuse.js](https://fusejs.io/) - Fuzzy search
+- [Tailwind CSS](https://tailwindcss.com/) - Modern styling system
+- [Fuse.js](https://fusejs.io/) - Intelligent fuzzy search
+- [AST Explorer](https://astexplorer.net/) - Code analysis inspiration
 
 ---
 
-**Built with ❤️ for the React community**
+**Built with ❤️ and 🧠 intelligence for the React community**
 
-[Documentation](https://github.com/abdelrahman18036/smartdocs) • [NPM Package](https://www.npmjs.com/package/smartdocs) • [GitHub](https://github.com/abdelrahman18036/smartdocs)
+### Version 0.1.0 BETA Features:
+✅ **Smart Content Analysis** - Knows components from pages from services  
+✅ **Route-Aware Detection** - Uses your actual routing configuration  
+✅ **Dependency Visualization** - See component relationships at a glance  
+✅ **Modern UI Experience** - Beautiful, responsive, touch-friendly  
+✅ **Enhanced Type Display** - No more `{...}` mysteries  
+✅ **Full Project Scanning** - Covers your entire codebase intelligently  
+
+[📖 Documentation](https://github.com/abdelrahman18036/smartdocs) • [📦 NPM Package](https://www.npmjs.com/package/smartdocs) • [🐙 GitHub](https://github.com/abdelrahman18036/smartdocs)
