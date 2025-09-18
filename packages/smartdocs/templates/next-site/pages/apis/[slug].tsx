@@ -55,7 +55,7 @@ export default function ApiPage({ component }: ApiPageProps) {
       {component.jsdoc?.returns && (
         <div className="space-y-4">
           <h2 className="text-2xl font-semibold">Returns</h2>
-          <div className="bg-gray-50 p-4 rounded-lg">
+          <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
             <p className="font-mono text-sm">{component.jsdoc.returns.type}</p>
             <p className="mt-2">{component.jsdoc.returns.description}</p>
           </div>

@@ -1,16 +1,14 @@
-import fs from "node:fs/promises";
+﻿import fs from "node:fs/promises";
 import path from "node:path";
 import type { ComponentDoc } from "../scan/react-fixed";
 
 export async function writeComponentPages(outDir: string, comps: ComponentDoc[]) {
-  // Group by type
   const groupedComponents = comps.reduce((acc, comp) => {
     if (!acc[comp.type]) acc[comp.type] = [];
     acc[comp.type].push(comp);
     return acc;
   }, {} as Record<string, ComponentDoc[]>);
 
-  // Create directories and write files for each type
   for (const [type, items] of Object.entries(groupedComponents)) {
     const typeDir = path.join(outDir, `${type}s`);
     await fs.mkdir(typeDir, { recursive: true });
@@ -23,98 +21,97 @@ export async function writeComponentPages(outDir: string, comps: ComponentDoc[])
 }
 
 function generateMdxContent(c: ComponentDoc, type: string): string {
-  return `---
+  const isHook = c.type === 'hook';
+  
+  let content = `---
 title: ${c.displayName}
 slug: /${type}s/${slug(c.displayName)}
 ---
 
 # ${c.displayName}
 
-${c.description ?? ""}
+${c.description ?? ""}`;
 
-${c.realUsageExamples && c.realUsageExamples.length > 0 ? `
+  if (isHook) {
+    // Hook category and type information
+    content += '\n\n## Hook Information\n\n';
+    content += `**Category:** ${c.hookCategory || 'custom'}\n\n`;
+    content += `**Type:** ${c.isBuiltInHook ? 'React Built-in Hook' : 'Custom Hook'}\n`;
+    
+    if (c.hookSignature) {
+      content += '\n\n## Hook Signature\n\n```typescript\n' + c.hookSignature + '\n```';
+    }
 
-## Real Usage Examples
+    if (c.parameters && c.parameters.length > 0) {
+      content += '\n\n## Parameters\n\n| Name | Type | Required | Description |\n|------|------|----------|-------------|\n';
+      for (const p of c.parameters) {
+        content += '| `' + p.name + '` | `' + p.type + '` | ' + (p.required ? "Yes" : "No") + ' | ' + (p.description ?? "") + ' |\n';
+      }
+    }
 
-${c.realUsageExamples.map((example, index) => `
-### Usage ${index + 1}
+    if (c.returnType) {
+      content += '\n\n## Return Type\n\n**Type:** `' + c.returnType.type + '`';
+      if (c.returnType.description) {
+        content += '\n\n**Description:** ' + c.returnType.description;
+      }
+    }
 
-\`\`\`tsx
-${example}
-\`\`\`
-`).join('\n')}
+    // Display hook usage patterns across the codebase
+    if (c.hookUsages && c.hookUsages.length > 0) {
+      content += '\n\n## Hook Usage in Codebase\n\n';
+      content += `Found **${c.hookUsages.length} usage(s)** across your codebase:\n\n`;
+      
+      c.hookUsages.forEach((usage, index) => {
+        content += `### Usage ${index + 1}\n\n`;
+        content += `**File:** \`${usage.file}\` (line ${usage.line})\n\n`;
+        content += `**Context:** Used in \`${usage.context}\` function\n\n`;
+        
+        if (usage.code) {
+          content += '```typescript\n' + usage.code + '\n```\n\n';
+        }
+        
+        if (usage.destructuring && usage.destructuring.length > 0) {
+          content += `**Destructured variables:** ${usage.destructuring.map(v => `\`${v}\``).join(', ')}\n\n`;
+        }
+        
+        if (usage.parameters && usage.parameters.length > 0) {
+          content += `**Parameters used:** ${usage.parameters.map(p => 
+            typeof p === 'object' ? JSON.stringify(p) : `\`${p}\``
+          ).join(', ')}\n\n`;
+        }
+        
+        if (usage.defaults && Object.keys(usage.defaults).length > 0) {
+          content += '**Default values:**\n\n';
+          for (const [key, value] of Object.entries(usage.defaults)) {
+            content += `- \`${key}\`: \`${typeof value === 'object' ? JSON.stringify(value) : value}\`\n`;
+          }
+          content += '\n';
+        }
+      });
+    }
+  }
 
-` : ''}
+  if (c.realUsageExamples && c.realUsageExamples.length > 0) {
+    content += '\n\n## Real Usage Examples';
+    for (let i = 0; i < c.realUsageExamples.length; i++) {
+      content += '\n\n### Usage ' + (i + 1) + '\n\n```' + (isHook ? 'typescript' : 'tsx') + '\n' + c.realUsageExamples[i] + '\n```';
+    }
+  }
 
-${c.jsdoc?.examples && c.jsdoc.examples.length > 0 ? `
+  if (!isHook) {
+    content += '\n\n## Props\n\n';
+    if (c.props.length > 0) {
+      content += '| Name | Type | Required | Default | Description |\n|------|------|----------|---------|-------------|\n';
+      for (const p of c.props) {
+        content += '| `' + p.name + '` | `' + p.type + '` | ' + (p.required ? "Yes" : "No") + ' | ' + (p.defaultValue ? '`' + p.defaultValue + '`' : "-") + ' | ' + (p.description ?? "") + ' |\n';
+      }
+    } else {
+      content += 'No props available.';
+    }
+  }
 
-## JSDoc Examples
-
-${c.jsdoc.examples.map((example, index) => `
-### Example ${index + 1}
-
-\`\`\`tsx
-${example}
-\`\`\`
-`).join('\n')}
-
-` : ''}
-
-## Props
-
-${c.props.length > 0 ? `<div className="overflow-x-auto">
-  <table className="min-w-full">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>Required</th>
-        <th>Default</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-${c.props.map(p => `      <tr>
-        <td><code>${p.name}</code></td>
-        <td><code>${p.type}</code></td>
-        <td>${p.required ? "Yes" : "No"}</td>
-        <td>${p.defaultValue ? `<code>${p.defaultValue}</code>` : "-"}</td>
-        <td>${p.description ?? ""}</td>
-      </tr>`).join("\n")}
-    </tbody>
-  </table>
-</div>` : 'No props available.'}
-
-## Example Usage
-
-\`\`\`tsx
-import { ${c.displayName} } from './${type}s/${c.displayName}';
-
-// Basic usage
-<${c.displayName}${c.props.filter(p => p.required).length > 0 ? 
-  ` ${c.props.filter(p => p.required).map(p => `${p.name}={${getExampleValue(p.type)}}`).join(' ')}` : 
-  ''} />
-
-// With all props
-<${c.displayName}
-${c.props.map(p => `  ${p.name}={${getExampleValue(p.type)}}`).join('\n')}
-/>
-\`\`\`
-
-## Source
-\`${c.filePath}\`
-`;
-}
-
-function getExampleValue(type: string): string {
-  if (type.includes('string')) return '"example"';
-  if (type.includes('number')) return '42';
-  if (type.includes('boolean')) return 'true';
-  if (type.includes('function') || type.includes('=>')) return '{() => {}}';
-  if (type.includes('ReactNode') || type.includes('React.ReactNode')) return '{children}';
-  if (type.includes('[]') || type.includes('Array')) return '{[]}';
-  if (type.includes('{}') || type.includes('object')) return '{{}}';
-  return '""';
+  content += '\n\n## Source\n`' + c.filePath + '`';
+  return content;
 }
 
 const slug = (s: string) => s.toLowerCase().replace(/[^\w]+/g, "-").replace(/(^-|-$)/g,"");

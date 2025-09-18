@@ -37,7 +37,7 @@ export function SearchBox({ components }: SearchBoxProps) {
       case 'hook': return 'bg-green-500/10 text-green-600 dark:text-green-400'
       case 'page': return 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
       case 'api': return 'bg-orange-500/10 text-orange-600 dark:text-orange-400'
-      default: return 'bg-gray-500/10 text-gray-600 dark:text-gray-400'
+      default: return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
     }
   }
 
