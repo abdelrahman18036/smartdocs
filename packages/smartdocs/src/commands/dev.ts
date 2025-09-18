@@ -3,7 +3,7 @@ import path from "node:path";
 import { spawn } from "node:child_process";
 import { watch } from "chokidar";
 import { ConfigSchema, type Config } from "../config";
-import { scanComponents } from "../scan/react";
+import { scanComponents } from "../scan/react-fixed";
 import { writeComponentPages } from "../generate/mdx";
 
 export async function dev(opts: { port: string }) {

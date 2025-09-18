@@ -26,7 +26,7 @@ export default function ComponentPage({ component }: ComponentPageProps) {
           <div className="overflow-x-auto">
             <table className="w-full border-collapse border border-gray-300">
               <thead>
-                <tr className="bg-gray-50">
+                <tr >
                   <th className="border border-gray-300 px-4 py-2 text-left">Name</th>
                   <th className="border border-gray-300 px-4 py-2 text-left">Type</th>
                   <th className="border border-gray-300 px-4 py-2 text-left">Required</th>
@@ -60,13 +60,24 @@ export default function ComponentPage({ component }: ComponentPageProps) {
         </div>
       )}
 
-      {component.jsdoc?.examples && component.jsdoc.examples.length > 0 && (
+      {component.realUsageExamples && component.realUsageExamples.length > 0 && (
         <div className="space-y-4">
-          <h2 className="text-2xl font-semibold">Examples</h2>
-          {component.jsdoc.examples.map((example: string, index: number) => (
-            <pre key={index} className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
-              <code>{example}</code>
-            </pre>
+          <h2 className="text-2xl font-semibold">Real Usage Examples</h2>
+          <p className="text-sm text-muted-foreground">Examples found in your codebase:</p>
+          {component.realUsageExamples.map((example: string, index: number) => (
+            <div key={index} className="space-y-2">
+              <h3 className="text-lg font-medium text-gray-700">Usage {index + 1}</h3>
+              <div className="relative">
+                <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm">
+                  <code className="language-tsx">{example}</code>
+                </pre>
+                <div className="absolute top-2 right-2">
+                  <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded">
+                    Real Code
+                  </span>
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       )}

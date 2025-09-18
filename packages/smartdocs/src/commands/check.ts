@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { ConfigSchema, type Config } from "../config";
-import { scanComponents } from "../scan/react";
+import { scanComponents } from "../scan/react-fixed";
 
 export async function check() {
   console.log("🔍 Running SmartDocs environment check...\n");

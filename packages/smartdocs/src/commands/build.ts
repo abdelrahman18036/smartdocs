@@ -2,7 +2,7 @@ import { globby } from "globby";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { ConfigSchema, type Config } from "../config";
-import { scanComponents } from "../scan/react";
+import { scanComponents } from "../scan/react-fixed";
 import { writeComponentPages } from "../generate/mdx";
 
 export async function build(opts: { config?: string }) {
@@ -13,6 +13,7 @@ export async function build(opts: { config?: string }) {
   
   // 1) Scan for all components, hooks, pages, etc.
   const patterns = config.entryPaths;
+  console.log(`🔍 Using scan patterns: ${patterns.join(', ')}`);
   const components = await scanComponents(patterns);
   
   console.log(`✓ Found ${components.length} items to document`);

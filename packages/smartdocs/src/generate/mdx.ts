@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import type { ComponentDoc } from "../scan/react";
+import type { ComponentDoc } from "../scan/react-fixed";
 
 export async function writeComponentPages(outDir: string, comps: ComponentDoc[]) {
   // Group by type
@@ -31,6 +31,34 @@ slug: /${type}s/${slug(c.displayName)}
 # ${c.displayName}
 
 ${c.description ?? ""}
+
+${c.realUsageExamples && c.realUsageExamples.length > 0 ? `
+
+## Real Usage Examples
+
+${c.realUsageExamples.map((example, index) => `
+### Usage ${index + 1}
+
+\`\`\`tsx
+${example}
+\`\`\`
+`).join('\n')}
+
+` : ''}
+
+${c.jsdoc?.examples && c.jsdoc.examples.length > 0 ? `
+
+## JSDoc Examples
+
+${c.jsdoc.examples.map((example, index) => `
+### Example ${index + 1}
+
+\`\`\`tsx
+${example}
+\`\`\`
+`).join('\n')}
+
+` : ''}
 
 ## Props
 

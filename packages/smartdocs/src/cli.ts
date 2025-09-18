@@ -19,9 +19,6 @@ program.command("init")
     try { 
       await init(); 
       spinner.succeed(pc.green("✅ SmartDocs initialized successfully!")); 
-      console.log(pc.cyan("\n📝 Next steps:"));
-      console.log(pc.white("  1. Run 'smartdocs build' to generate documentation"));
-      console.log(pc.white("  2. Run 'smartdocs dev' to start development server"));
     }
     catch (e: any) { 
       spinner.fail(pc.red("❌ Initialization failed: " + (e?.message ?? "Unknown error"))); 

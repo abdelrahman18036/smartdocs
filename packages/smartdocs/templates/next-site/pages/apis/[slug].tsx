@@ -66,9 +66,19 @@ export default function ApiPage({ component }: ApiPageProps) {
         <div className="space-y-4">
           <h2 className="text-2xl font-semibold">Examples</h2>
           {component.jsdoc.examples.map((example: string, index: number) => (
-            <pre key={index} className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
-              <code>{example}</code>
-            </pre>
+            <div key={index} className="space-y-2">
+              <h3 className="text-lg font-medium text-gray-700">Example {index + 1}</h3>
+              <div className="relative">
+                <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm">
+                  <code className="language-js">{example}</code>
+                </pre>
+                <div className="absolute top-2 right-2">
+                  <span className="bg-orange-100 text-orange-800 text-xs font-medium px-2 py-1 rounded">
+                    API
+                  </span>
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       )}

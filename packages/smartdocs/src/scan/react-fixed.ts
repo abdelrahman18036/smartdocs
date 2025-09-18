@@ -15,6 +15,7 @@ export type ComponentDoc = {
     defaultValue?: string; description?: string;
   }>;
   examples?: string[];
+  realUsageExamples?: string[];
   jsdoc?: {
     description?: string;
     params?: Array<{ name: string; type: string; description: string; }>;
@@ -108,14 +109,35 @@ export async function scanComponents(patterns: string[]): Promise<ComponentDoc[]
                          isPage(file) ? 'page' : 
                          isHook(name, file) ? 'hook' : 'component';
           
-          // Enhanced props extraction
-          const props = Object.entries(p.props ?? {}).map(([propName, pr]: [string, any]) => ({
-            name: propName,
-            type: pr.type?.name || pr.type?.raw || pr.type || "unknown",
-            required: !!pr.required,
-            defaultValue: pr.defaultValue?.value || pr.defaultValue,
-            description: pr.description || ""
-          }));
+          // Enhanced props extraction with safe defaultValue serialization
+          const props = Object.entries(p.props ?? {}).map(([propName, pr]: [string, any]) => {
+            let defaultValue: string | undefined;
+            
+            if (pr.defaultValue) {
+              if (typeof pr.defaultValue === 'string') {
+                defaultValue = pr.defaultValue;
+              } else if (pr.defaultValue.value) {
+                defaultValue = String(pr.defaultValue.value);
+              } else {
+                try {
+                  defaultValue = JSON.stringify(pr.defaultValue);
+                } catch {
+                  defaultValue = String(pr.defaultValue);
+                }
+              }
+            }
+            
+            return {
+              name: propName,
+              type: pr.type?.name || pr.type?.raw || pr.type || "unknown",
+              required: !!pr.required,
+              defaultValue,
+              description: pr.description || ""
+            };
+          });
+
+          // Extract real usage examples for components
+          const realUsageExamples = docType === 'component' ? await extractRealUsageExamples(name) : [];
 
           docs.push({
             displayName: name,
@@ -124,7 +146,8 @@ export async function scanComponents(patterns: string[]): Promise<ComponentDoc[]
             type: docType,
             props,
             jsdoc: extractJsDoc(p.description),
-            examples: storyExamples[name] || []
+            examples: storyExamples[name] || [],
+            realUsageExamples
           });
         }
       } else if (isJs(file)) {
@@ -137,21 +160,43 @@ export async function scanComponents(patterns: string[]): Promise<ComponentDoc[]
                          isPage(file) ? 'page' : 
                          isHook(name, file) ? 'hook' : 'component';
           
+          // Extract real usage examples for components
+          const realUsageExamples = docType === 'component' ? await extractRealUsageExamples(name) : [];
+          
           const propEntries = Object.entries(c.props ?? {});
           docs.push({
             displayName: name,
             filePath: relativePath,
             description: c.description || "",
             type: docType,
-            props: propEntries.map(([name, pr]: any) => ({
-              name,
-              type: pr.tsType?.name || pr.flowType?.name || pr.type?.name || "",
-              required: !!pr.required,
-              defaultValue: pr.defaultValue?.value,
-              description: pr.description || ""
-            })),
+            props: propEntries.map(([name, pr]: any) => {
+              let defaultValue: string | undefined;
+              
+              if (pr.defaultValue) {
+                if (typeof pr.defaultValue === 'string') {
+                  defaultValue = pr.defaultValue;
+                } else if (pr.defaultValue.value) {
+                  defaultValue = String(pr.defaultValue.value);
+                } else {
+                  try {
+                    defaultValue = JSON.stringify(pr.defaultValue);
+                  } catch {
+                    defaultValue = String(pr.defaultValue);
+                  }
+                }
+              }
+              
+              return {
+                name,
+                type: pr.tsType?.name || pr.flowType?.name || pr.type?.name || "",
+                required: !!pr.required,
+                defaultValue,
+                description: pr.description || ""
+              };
+            }),
             jsdoc: extractJsDoc(c.description),
-            examples: storyExamples[name] || []
+            examples: storyExamples[name] || [],
+            realUsageExamples
           });
         }
       }
@@ -285,4 +330,96 @@ function extractJsDoc(description?: string): ComponentDoc['jsdoc'] {
   }
   
   return jsdoc;
+}
+
+async function extractRealUsageExamples(componentName: string): Promise<string[]> {
+  try {
+    // Search for files that might contain the component usage
+    const sourceFiles = await globby([
+      'src/**/*.{js,jsx,ts,tsx}',
+      'pages/**/*.{js,jsx,ts,tsx}',
+      'app/**/*.{js,jsx,ts,tsx}',
+      'components/**/*.{js,jsx,ts,tsx}',
+      '!**/*.stories.{js,jsx,ts,tsx}',
+      '!**/*.test.{js,jsx,ts,tsx}',
+      '!**/node_modules/**'
+    ], { gitignore: true, absolute: true });
+
+    const examples: string[] = [];
+
+    for (const file of sourceFiles) {
+      try {
+        const content = await fs.readFile(file, 'utf-8');
+        
+        // Skip if file doesn't contain the component
+        if (!content.includes(componentName)) continue;
+
+        // Parse the file to extract JSX usage
+        const ast = babelParser.parse(content, {
+          sourceType: 'module',
+          plugins: ['jsx', 'typescript'],
+        });
+
+        // Find JSX elements using the component
+        const usageExamples: string[] = [];
+        
+        function findJSXUsage(node: any, source: string) {
+          if (node.type === 'JSXElement' || node.type === 'JSXFragment') {
+            if (node.openingElement?.name?.name === componentName) {
+              // Extract the JSX element with proper formatting
+              const start = node.start;
+              const end = node.end;
+              if (start !== undefined && end !== undefined) {
+                const jsxCode = source.slice(start, end);
+                // Clean up and format the code
+                const cleanCode = jsxCode
+                  .split('\n')
+                  .map(line => line.trim())
+                  .filter(line => line.length > 0)
+                  .join('\n');
+                usageExamples.push(cleanCode);
+              }
+            }
+          }
+          
+          // Recursively check children
+          if (node.children) {
+            for (const child of node.children) {
+              findJSXUsage(child, source);
+            }
+          }
+          
+          // Check other properties that might contain JSX
+          for (const key in node) {
+            if (node[key] && typeof node[key] === 'object') {
+              if (Array.isArray(node[key])) {
+                for (const item of node[key]) {
+                  if (item && typeof item === 'object') {
+                    findJSXUsage(item, source);
+                  }
+                }
+              } else {
+                findJSXUsage(node[key], source);
+              }
+            }
+          }
+        }
+
+        findJSXUsage(ast, content);
+        examples.push(...usageExamples);
+
+      } catch (error) {
+        // Skip files that can't be parsed
+        continue;
+      }
+    }
+
+    // Remove duplicates and limit to 3 examples
+    const uniqueExamples = [...new Set(examples)];
+    return uniqueExamples.slice(0, 3);
+
+  } catch (error) {
+    console.warn(`Failed to extract real usage examples for ${componentName}:`, error instanceof Error ? error.message : error);
+    return [];
+  }
 }
