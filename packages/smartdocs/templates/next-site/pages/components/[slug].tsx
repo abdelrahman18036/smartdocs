@@ -262,7 +262,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
   try {
-    const searchPath = path.join(process.cwd(), '..', 'content', 'search.json')
+    const searchPath = path.join(process.cwd(), 'content', 'search.json')
     const searchData = JSON.parse(fs.readFileSync(searchPath, 'utf-8'))
     
     const component = searchData.components.find(

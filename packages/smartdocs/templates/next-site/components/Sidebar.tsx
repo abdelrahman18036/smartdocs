@@ -15,7 +15,7 @@ interface PageData {
   name: string;
   path: string;
   description: string;
-  type: 'page' | 'api' | 'special';
+  type: 'page' | 'special';
 }
 
 interface SidebarProps {}
@@ -25,7 +25,6 @@ const getIcon = (type: string) => {
     case 'component': return <Component className="h-4 w-4" />
     case 'hook': return <Zap className="h-4 w-4" />
     case 'page': return <FileText className="h-4 w-4" />
-    case 'api': return <Code className="h-4 w-4" />
     case 'mdx': return <FileText className="h-4 w-4" />
     case 'packages': return <Package className="h-4 w-4" />
     case 'pages': return <Globe className="h-4 w-4" />
@@ -95,8 +94,7 @@ export function Sidebar({}: SidebarProps) {
     
     // Dynamically detect pages from the router or file system
     const detectedPages: PageData[] = [
-      { name: 'Overview', path: '/', description: 'Project overview and introduction', type: 'page' },
-      { name: 'API Documentation', path: '/api/components', description: 'Components data API endpoint', type: 'api' }
+      { name: 'Overview', path: '/', description: 'Project overview and introduction', type: 'page' }
     ]
     
     // Add pages based on available routes if they exist
@@ -224,7 +222,6 @@ export function Sidebar({}: SidebarProps) {
                 case 'hook': return hasActiveChild || isExpanded ? 'from-green-500 to-green-600' : 'from-green-400 to-green-500'
                 case 'component': return hasActiveChild || isExpanded ? 'from-blue-500 to-blue-600' : 'from-blue-400 to-blue-500'
                 case 'page': return hasActiveChild || isExpanded ? 'from-purple-500 to-purple-600' : 'from-purple-400 to-purple-500'
-                case 'api': return hasActiveChild || isExpanded ? 'from-orange-500 to-orange-600' : 'from-orange-400 to-orange-500'
                 default: return hasActiveChild || isExpanded ? 'from-slate-500 to-slate-600' : 'from-slate-400 to-slate-500'
               }
             }

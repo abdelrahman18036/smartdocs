@@ -33,14 +33,16 @@ export default function Home({ components }: HomeProps) {
         {/* Statistics Cards */}
         <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
           {/* Total Count */}
-          <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl px-6 py-4 shadow-lg border border-slate-200/50 dark:border-slate-700/50">
-            <div className="flex items-center gap-3">
-              <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-green-500 rounded-full animate-pulse"></div>
+          <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl px-5 py-3 shadow-lg border border-slate-200/50 dark:border-slate-700/50 min-w-[120px]">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-slate-500 to-slate-600 flex items-center justify-center text-white text-sm">
+                <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
+              </div>
               <div>
-                <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                <div className="text-lg font-bold text-slate-900 dark:text-slate-100">
                   {totalItems}
                 </div>
-                <div className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                <div className="text-xs font-medium text-slate-600 dark:text-slate-400">
                   Total Items
                 </div>
               </div>
@@ -79,7 +81,7 @@ export default function Home({ components }: HomeProps) {
             };
             
             return (
-              <div key={type} className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-2xl px-5 py-3 shadow-md border border-slate-200/30 dark:border-slate-700/30">
+              <div key={type} className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl px-5 py-3 shadow-lg border border-slate-200/50 dark:border-slate-700/50 min-w-[120px]">
                 <div className="flex items-center gap-2">
                   <div className={`w-8 h-8 rounded-lg bg-gradient-to-r ${config.gradient} flex items-center justify-center text-white text-sm`}>
                     {config.icon}
@@ -116,15 +118,7 @@ export default function Home({ components }: HomeProps) {
 
       {/* Documentation Grid */}
       <div className="space-y-8 pt-8">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-4">
-            📋 Browse All Documentation
-          </h2>
-          <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-            Explore components, hooks, pages, and APIs with detailed examples, usage patterns, and comprehensive documentation
-          </p>
-        </div>
-        
+      
         <ComponentsList components={components} />
       </div>
     </div>
@@ -133,7 +127,7 @@ export default function Home({ components }: HomeProps) {
 
 export const getStaticProps: GetStaticProps = async () => {
   try {
-    const searchPath = path.join(process.cwd(), '..', 'content', 'search.json')
+    const searchPath = path.join(process.cwd(), 'content', 'search.json')
     const searchData = JSON.parse(fs.readFileSync(searchPath, 'utf-8'))
     
     return {

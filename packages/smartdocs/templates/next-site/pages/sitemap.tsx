@@ -402,7 +402,7 @@ export const getStaticProps: GetStaticProps = async () => {
     // Try to read the components data from the content directory
     const fs = await import('fs')
     const path = await import('path')
-    const searchJsonPath = path.join(process.cwd(), '..', 'content', 'search.json')
+    const searchJsonPath = path.join(process.cwd(), 'content', 'search.json')
     
     const searchData = JSON.parse(fs.readFileSync(searchJsonPath, 'utf-8'))
     components = searchData.components || []

@@ -7,12 +7,10 @@ import Pagination, { usePagination } from '../../components/Pagination'
 // Helper function to extract components used in a page
 function extractUsedComponents(pageContent: string, allComponents: any[]) {
   if (!pageContent) {
-    console.log('No page content provided to extractUsedComponents')
     return []
   }
   
-  console.log('Page content length:', pageContent.length)
-  console.log('Available components:', allComponents.length)
+
   
   const usedComponents: Array<{name: string, type: string, count: number, firstUsage: string}> = []
   const componentMap = new Map()
@@ -24,9 +22,7 @@ function extractUsedComponents(pageContent: string, allComponents: any[]) {
     }
   })
   
-  console.log('Component map created with:', componentMap.size, 'entries')
-  console.log('Component names available:', Array.from(componentMap.keys()))
-  
+
   // Enhanced patterns for better detection
   const importPattern = /import\s*(?:\*\s+as\s+\w+|(?:\{[^}]*\}|\w+)(?:\s*,\s*(?:\{[^}]*\}|\w+))*)\s*from\s*['"`][^'"`]*['"`]/gm
   const jsxPattern = /<([A-Z][a-zA-Z0-9]*(?:\.[A-Z][a-zA-Z0-9]*)*)/g
@@ -37,11 +33,9 @@ function extractUsedComponents(pageContent: string, allComponents: any[]) {
   const imports = Array.from(pageContent.matchAll(importPattern))
   const importedNames = new Set<string>()
   
-  console.log('Found imports:', imports.length)
   
   imports.forEach(match => {
     const importText = match[0]
-    console.log('Processing import:', importText)
     
     // Extract all possible names from import (default, named, destructured)
     const nameMatches = importText.match(/\b[A-Z][a-zA-Z0-9]*\b/g) || []
@@ -50,7 +44,6 @@ function extractUsedComponents(pageContent: string, allComponents: any[]) {
     const allNames = [...nameMatches, ...hookMatches]
     
     if (allNames.length > 0) {
-      console.log('Import contains names:', allNames)
       allNames.forEach(name => {
         if (componentMap.has(name)) {
           importedNames.add(name) // Track imported names but don't count them yet
@@ -62,7 +55,6 @@ function extractUsedComponents(pageContent: string, allComponents: any[]) {
               count: 0, // Start with 0 for imports
               firstUsage: importText
             })
-            console.log('✅ Registered from import:', name, comp.type)
           }
         }
       })
@@ -71,11 +63,9 @@ function extractUsedComponents(pageContent: string, allComponents: any[]) {
   
   // Find JSX usage with enhanced context (count actual usage)
   const jsxMatches = Array.from(pageContent.matchAll(jsxPattern))
-  console.log('Found JSX matches:', jsxMatches.length)
   
   jsxMatches.forEach(match => {
     const componentName = match[1]
-    console.log('Checking JSX component:', componentName)
     
     if (componentMap.has(componentName)) {
       // Get surrounding context for better usage example
@@ -108,7 +98,6 @@ function extractUsedComponents(pageContent: string, allComponents: any[]) {
   const hookMatches = Array.from(pageContent.matchAll(hookPattern))
   const directHookMatches = Array.from(pageContent.matchAll(directHookPattern))
   
-  console.log('Found hook matches:', hookMatches.length, 'direct matches:', directHookMatches.length)
   
   // Process structured hook usage (with variable assignment)
   hookMatches.forEach(match => {
@@ -166,7 +155,6 @@ function extractUsedComponents(pageContent: string, allComponents: any[]) {
   // Filter out components with 0 usage (only imported but never used)
   const actuallyUsedComponents = usedComponents.filter(u => u.count > 0)
   
-  console.log('🎯 Final extracted components:', actuallyUsedComponents.length, actuallyUsedComponents.map(u => `${u.name}(${u.count}x)`))
   return actuallyUsedComponents
 }
 
@@ -524,7 +512,7 @@ export default function PagePage({ component, usedComponents }: PagePageProps) {
 
 export const getStaticPaths: GetStaticPaths = async () => {
   try {
-    const searchPath = path.join(process.cwd(), '..', 'content', 'search.json')
+    const searchPath = path.join(process.cwd(), 'content', 'search.json')
     const searchData = JSON.parse(fs.readFileSync(searchPath, 'utf-8'))
     
     const paths = searchData.components
@@ -547,7 +535,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
   try {
-    const searchPath = path.join(process.cwd(), '..', 'content', 'search.json')
+    const searchPath = path.join(process.cwd(), 'content', 'search.json')
     const searchData = JSON.parse(fs.readFileSync(searchPath, 'utf-8'))
     
     const component = searchData.components.find(
@@ -582,15 +570,11 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
           component.filePath
         ]
         
-        console.log('Trying to find page file:', component.filePath)
-        console.log('Current working directory:', process.cwd())
-        
+       
         for (const filePath of possiblePaths) {
           try {
-            console.log('Checking path:', filePath)
             if (fs.existsSync(filePath)) {
               pageContent = fs.readFileSync(filePath, 'utf-8')
-              console.log('Found page content, length:', pageContent.length)
               break
             }
           } catch (e) {
@@ -599,9 +583,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
         }
         
         if (pageContent) {
-          console.log('Extracting components from content...')
           usedComponents = extractUsedComponents(pageContent, searchData.components)
-          console.log('Found used components:', usedComponents.length)
         } else {
           console.warn('Could not find page file at any path for:', component.filePath)
           console.warn('Available search data has', searchData.components?.length || 0, 'total components')

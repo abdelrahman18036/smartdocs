@@ -27,6 +27,7 @@ SmartDocs revolutionizes React documentation by **intelligently analyzing** your
 - **Hot Reload**: Instant updates during development
 - **Lightning Fast**: Optimized for large codebases (1000+ components)
 - **Framework Agnostic**: React Router, Next.js, Vite, CRA, and more
+- **Deploy-Ready**: Single `.smartdocs/` directory contains everything needed
 
 ## 🚀 Quick Start
 
@@ -49,6 +50,9 @@ npx smartdocs init
 ```bash
 # Scans your entire project and builds beautiful docs
 npx smartdocs build
+
+# Everything is built into a single .smartdocs/ directory 
+# - Ready for deployment to Vercel, Netlify, or any static host!
 ```
 
 ### Development Mode
@@ -152,8 +156,7 @@ export default defineConfig({
     "**/*.config.*", // Smart exclusions
     "**/__tests__/**"
   ],
-  outDir: ".smartdocs",
-  siteOutDir: "smartdocs-dist"
+  outDir: ".smartdocs"  // Everything builds here - site + content
 });
 ```
 
@@ -179,14 +182,15 @@ export default defineConfig({
 ## 🚀 Deploy Anywhere
 
 ```bash
-# Generate static site
+# Generate static site (everything goes into .smartdocs/)
 npx smartdocs build
 
-# Deploy to any static hosting
-npx vercel --prod smartdocs-dist
-npx netlify deploy --prod --dir smartdocs-dist
+# Deploy to any static hosting - just point to .smartdocs/
+npx vercel --prod .smartdocs
+npx netlify deploy --prod --dir .smartdocs
 
-# Or copy smartdocs-dist/ to your preferred hosting
+# Or upload .smartdocs/ directory to your hosting provider
+# Contains everything needed: HTML, CSS, JS, and content files
 ```
 
 ## 🌍 Framework Support

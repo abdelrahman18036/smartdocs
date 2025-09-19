@@ -32,7 +32,7 @@ export async function check() {
       }
       
       if (validPaths > 0) {
-        console.log(`✅ Found ${validPaths}/${config.entryPaths.length} valid entry paths`);
+        
       } else {
         console.log("❌ No valid entry paths found");
         hasErrors = true;

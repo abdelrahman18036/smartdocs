@@ -14,12 +14,12 @@ export async function dev(opts: { port: string }) {
   // Initial build
   await buildDocumentation(config);
   
-  // Start Next.js dev server
-  const siteDir = path.resolve(process.cwd(), config.outDir, "site");
-  const siteExists = await fs.access(siteDir).then(() => true).catch(() => false);
+  // Start Next.js dev server (unified build - files are directly in outDir)
+  const siteDir = path.resolve(process.cwd(), config.outDir);
+  const packageJsonExists = await fs.access(path.join(siteDir, "package.json")).then(() => true).catch(() => false);
   
-  if (!siteExists) {
-    console.log("⚠️  Site template not found. Run 'smartdocs init' first.");
+  if (!packageJsonExists) {
+    console.log("⚠️  Site not built yet. Run 'smartdocs build' first.");
     return;
   }
 
@@ -57,7 +57,6 @@ async function buildDocumentation(config: Config): Promise<void> {
   const patterns = config.entryPaths;
   const components = await scanComponents(patterns);
   
-  console.log(`✓ Found ${components.length} items to document`);
 
   const contentDir = path.join(config.outDir, "content");
   await fs.mkdir(contentDir, { recursive: true });

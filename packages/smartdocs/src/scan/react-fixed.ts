@@ -52,8 +52,6 @@ const isMdx = (f: string) => /\.(md|mdx)$/.test(f);
 // Content-based type detection (not location-based)
 const isHook = (name: string) => name.startsWith('use');
 
-const isApi = (file: string) => 
-  file.includes('/api/') || file.includes('\\api\\');
 
 // Helper function to check if component is referenced in routes/navigation
 const isReferencedInRoutes = async (filePath: string, componentName: string): Promise<boolean> => {
@@ -415,7 +413,7 @@ const isReferencedInRoutes = async (filePath: string, componentName: string): Pr
 };
 
 // Helper function to analyze code content and determine type
-const analyzeCodeContent = async (filePath: string, name: string, code?: string): Promise<'component' | 'hook' | 'service' | 'util' | 'page'> => {
+const analyzeCodeContent = async (filePath: string, name: string, code?: string): Promise<'component' | 'hook' | 'page'> => {
   // 1. Hook detection - names starting with 'use'
   if (isHook(name)) {
     return 'hook';
@@ -431,26 +429,12 @@ const analyzeCodeContent = async (filePath: string, name: string, code?: string)
     }
   }
   
-  // 3. Service detection - exports classes/objects with service patterns or API calls
-  if (fileContent.includes('class ') && 
-      (fileContent.includes('Service') || fileContent.includes('API') || fileContent.includes('Client'))) {
-    return 'service';
-  }
-  
-  // 4. Utility detection - helper functions, no JSX/React, pure functions
+  // 3. Additional hook detection - custom hooks that might be in utility files
   if (name.startsWith('use') && 
       (fileContent.includes('export const') || fileContent.includes('export default')) &&
-      !fileContent.includes('return <') && !fileContent.includes('JSX.Element')) {
-    return 'hook'; // Custom hooks in utils
-  }
-  
-  // 5. Utility detection - pure utility functions
-  if (!fileContent.includes('JSX') && !fileContent.includes('tsx') && 
-      !fileContent.includes('return <') && !fileContent.includes('React') &&
-      !fileContent.includes('Component') &&
-      (fileContent.includes('export const') || fileContent.includes('export function') || 
-       fileContent.includes('export default function'))) {
-    return 'util';
+      (fileContent.includes('useState') || fileContent.includes('useEffect') || fileContent.includes('useContext') || 
+       fileContent.includes('useRef') || fileContent.includes('useMemo') || fileContent.includes('useCallback'))) {
+    return 'hook';
   }
   
   // 6. Dynamic page detection - purely based on route/navigation usage
@@ -667,7 +651,7 @@ export async function scanComponents(patterns: string[]): Promise<ComponentDoc[]
         for (const p of parsed) {
           const name = p.displayName;
           // Determine type based on code content, not directory location
-          const docType = isApi(file) ? 'api' : await analyzeCodeContent(file, name, code);
+          const docType = await analyzeCodeContent(file, name, code);
           
           // Enhanced props extraction with safe defaultValue serialization
           const props = Object.entries(p.props ?? {}).map(([propName, pr]: [string, any]) => {
@@ -771,7 +755,7 @@ export async function scanComponents(patterns: string[]): Promise<ComponentDoc[]
         for (const c of components) {
           const name = c.displayName || inferNameFromPath(file);
           // Determine type based on code content, not directory location
-          const docType = isApi(file) ? 'api' : await analyzeCodeContent(file, name, code);
+          const docType = await analyzeCodeContent(file, name, code);
           
           // Extract real usage examples for components or hooks
           const realUsageExamples = docType === 'component' ? 

@@ -19,7 +19,6 @@ const getIcon = (type: string) => {
     case 'component': return <Component className="h-5 w-5" />
     case 'hook': return <Zap className="h-5 w-5" />
     case 'page': return <FileText className="h-5 w-5" />
-    case 'api': return <Code className="h-5 w-5" />
     case 'mdx': return <FileText className="h-5 w-5" />
     default: return <Component className="h-5 w-5" />
   }
@@ -30,7 +29,6 @@ const getBadgeColor = (type: string) => {
     case 'component': return 'bg-blue-500/10 text-blue-600 border-blue-500/20 dark:text-blue-400'
     case 'hook': return 'bg-green-500/10 text-green-600 border-green-500/20 dark:text-green-400'
     case 'page': return 'bg-purple-500/10 text-purple-600 border-purple-500/20 dark:text-purple-400'
-    case 'api': return 'bg-orange-500/10 text-orange-600 border-orange-500/20 dark:text-orange-400'
     case 'mdx': return 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600'
     default: return 'bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600'
   }
@@ -41,7 +39,6 @@ const getGradient = (type: string) => {
     case 'component': return 'from-blue-500/5 to-blue-600/5'
     case 'hook': return 'from-green-500/5 to-green-600/5'
     case 'page': return 'from-purple-500/5 to-purple-600/5'
-    case 'api': return 'from-orange-500/5 to-orange-600/5'
     case 'mdx': return 'from-gray-500/5 to-gray-600/5'
     default: return 'from-gray-500/5 to-gray-600/5'
   }
@@ -81,7 +78,6 @@ function ComponentSection({ type, items }: { type: string; items: ComponentData[
                   {type === 'hook' && '🪝 '}
                   {type === 'component' && '⚛️ '}
                   {type === 'page' && '📄 '}
-                  {type === 'api' && '🔌 '}
                   {type === 'mdx' && '📝 '}
                   {type.charAt(0).toUpperCase() + type.slice(1)}
                 </div>
@@ -195,7 +191,7 @@ export function ComponentsList({ components }: ComponentsListProps) {
 
   // Sort sections by priority (hooks first since they're often most numerous)
   const sortedSections = Object.entries(groupedComponents).sort(([a], [b]) => {
-    const order = ['hook', 'component', 'page', 'api', 'mdx'];
+    const order = ['hook', 'component', 'page', 'mdx'];
     return order.indexOf(a) - order.indexOf(b);
   });
 
@@ -217,27 +213,26 @@ export function ComponentsList({ components }: ComponentsListProps) {
             </p>
           </div>
           
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-4xl mx-auto">
             {Object.entries(groupedComponents).map(([type, items]) => (
               <div key={type} className="group">
-                <div className="bg-white dark:bg-slate-800/50 rounded-xl p-6 border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 backdrop-blur-sm">
+                <div className="bg-white dark:bg-slate-800/50 rounded-2xl p-8 border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2 backdrop-blur-sm">
                   <div className="text-center">
-                    <div className={`mx-auto w-16 h-16 rounded-xl bg-gradient-to-r ${getGradient(type)} border-2 border-white dark:border-slate-700 shadow-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                      <div className="text-lg">
+                    <div className={`mx-auto w-20 h-20 rounded-2xl bg-gradient-to-r ${getGradient(type)} border-2 border-white dark:border-slate-700 shadow-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
+                      <div className="text-2xl">
                         {getIcon(type)}
                       </div>
                     </div>
-                    <div className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-1 group-hover:scale-110 transition-transform duration-300">
+                    <div className="text-4xl font-bold text-slate-900 dark:text-slate-100 mb-2 group-hover:scale-110 transition-transform duration-300">
                       {items.length}
                     </div>
-                    <div className="text-sm font-semibold text-slate-600 dark:text-slate-400 capitalize mb-2">
+                    <div className="text-base font-semibold text-slate-600 dark:text-slate-400 capitalize mb-3">
                       {type}{items.length !== 1 ? 's' : ''}
                     </div>
-                    <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getBadgeColor(type)} shadow-sm`}>
+                    <div className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium ${getBadgeColor(type)} shadow-sm`}>
                       {type === 'hook' && '🪝 '}
                       {type === 'component' && '⚛️ '}
                       {type === 'page' && '📄 '}
-                      {type === 'api' && '🔌 '}
                       {type === 'mdx' && '📝 '}
                       {type.charAt(0).toUpperCase() + type.slice(1)}
                     </div>
