@@ -1,4 +1,4 @@
-# SmartDocs 📚✨ (BETA v0.1.0)
+# SmartDocs 📚✨ 
 
 > **Auto-generate beautiful, intelligent documentation for React/Next.js projects with zero configuration**
 
@@ -6,7 +6,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 
+**🎉 NOW AVAILABLE ON NPM!** Install SmartDocs today: `npm i smartdocs`
+
 SmartDocs revolutionizes documentation by intelligently scanning your React/Next.js codebase and generating a comprehensive, modern documentation site. It uses advanced content analysis and route detection to automatically categorize components, hooks, pages, services, and utilities while extracting detailed prop information, types, JSDoc comments, and component relationships.
+
+**📦 [View on NPM](https://www.npmjs.com/package/smartdocs)** • **🚀 [Try it now](#-quick-start)** • **⭐ [Star on GitHub](https://github.com/abdelrahman18036/smartdocs)**
 
 ## ✨ Features
 
@@ -47,10 +51,21 @@ SmartDocs revolutionizes documentation by intelligently scanning your React/Next
 
 ## 🚀 Quick Start
 
-### 1. Initialize SmartDocs
+### Install SmartDocs
 
 ```bash
+# Install globally (recommended)
+npm install -g smartdocs
+
+# Or use directly with npx (no installation needed)
 npx smartdocs init
+```
+
+### 1. Initialize Your Project
+
+```bash
+# Creates smartdocs.config.ts with intelligent defaults
+smartdocs init
 ```
 
 This creates:
@@ -60,7 +75,8 @@ This creates:
 ### 2. Generate Documentation
 
 ```bash
-npx smartdocs build
+# Build beautiful documentation site
+smartdocs build
 ```
 
 **Smart Process**: Scans entire project → Analyzes routes & dependencies → Generates enhanced MDX → Builds modern static site → Outputs to `smartdocs-dist/`
@@ -68,7 +84,8 @@ npx smartdocs build
 ### 3. Development Mode  
 
 ```bash
-npx smartdocs dev
+# Start development server with hot-reload
+smartdocs dev
 ```
 
 Starts development server at http://localhost:4400 with:
@@ -78,6 +95,8 @@ Starts development server at http://localhost:4400 with:
 - 🔍 **Enhanced search** with fuzzy matching
 - 📱 **Mobile-responsive** design
 
+> **📦 Available on npm**: [https://www.npmjs.com/package/smartdocs](https://www.npmjs.com/package/smartdocs)
+
 ## 📋 Commands
 
 | Command | Description |
@@ -86,6 +105,8 @@ Starts development server at http://localhost:4400 with:
 | `smartdocs build` | Generate static documentation site |
 | `smartdocs dev` | Start development server with hot-reload |
 | `smartdocs check` | Validate config and environment |
+
+> **💡 Pro tip**: Install globally with `npm install -g smartdocs` to use `smartdocs` directly, or use `npx smartdocs` without installation
 
 ## ⚙️ Configuration
 
