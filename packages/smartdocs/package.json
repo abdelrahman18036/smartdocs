@@ -1,6 +1,6 @@
 {
   "name": "smartdocs",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Smart documentation generator for React/Next",
   "type": "module",
   "bin": {
@@ -13,7 +13,7 @@
   "files": [
     "dist",
     "templates",
-    "readme.md"
+    "README.md"
   ],
   "engines": {
     "node": ">=18"
