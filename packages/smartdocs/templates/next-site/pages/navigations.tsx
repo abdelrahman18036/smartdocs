@@ -306,12 +306,24 @@ export default function NavigationsPage({ navigationData }: NavigationsPageProps
     setIsPanning(false)
   }
 
-  const getNodeColor = (type: string) => {
+  const getNodeColor = (type: string, isDark = false) => {
     switch (type) {
-      case 'page': return 'fill-purple-100 stroke-purple-500 dark:fill-purple-900/30 dark:stroke-purple-400'
-      case 'component': return 'fill-blue-100 stroke-blue-500 dark:fill-blue-900/30 dark:stroke-blue-400'
-      case 'hook': return 'fill-green-100 stroke-green-500 dark:fill-green-900/30 dark:stroke-green-400'
-      default: return 'fill-slate-100 stroke-slate-500 dark:fill-slate-800 dark:stroke-slate-400'
+      case 'page': 
+        return isDark 
+          ? 'fill-url(#pageGradientDark) stroke-purple-400' 
+          : 'fill-url(#pageGradient) stroke-purple-500'
+      case 'component': 
+        return isDark 
+          ? 'fill-url(#componentGradientDark) stroke-blue-400' 
+          : 'fill-url(#componentGradient) stroke-blue-500'
+      case 'hook': 
+        return isDark 
+          ? 'fill-url(#hookGradientDark) stroke-green-400' 
+          : 'fill-url(#hookGradient) stroke-green-500'
+      default: 
+        return isDark 
+          ? 'fill-slate-800 stroke-slate-400' 
+          : 'fill-slate-100 stroke-slate-500'
     }
   }
 
@@ -451,80 +463,264 @@ export default function NavigationsPage({ navigationData }: NavigationsPageProps
               </defs>
               <rect width="100%" height="100%" fill="url(#grid)" />
 
+              {/* Connection Definitions */}
+              <defs>
+                <marker
+                  id="arrowhead"
+                  markerWidth="6"
+                  markerHeight="4"
+                  refX="5.5"
+                  refY="2"
+                  orient="auto"
+                  markerUnits="strokeWidth"
+                >
+                  <polygon
+                    points="0 0, 6 2, 0 4"
+                    fill="#1e293b"
+                    className="dark:fill-slate-300"
+                  />
+                </marker>
+                
+                {/* Node Gradients - Better Colors */}
+                <linearGradient id="pageGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#fdf4ff" />
+                  <stop offset="50%" stopColor="#fae8ff" />
+                  <stop offset="100%" stopColor="#f3e8ff" />
+                </linearGradient>
+                <linearGradient id="pageGradientDark" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="rgba(168, 85, 247, 0.8)" />
+                  <stop offset="50%" stopColor="rgba(147, 51, 234, 0.6)" />
+                  <stop offset="100%" stopColor="rgba(126, 34, 206, 0.5)" />
+                </linearGradient>
+                
+                <linearGradient id="componentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#f0f9ff" />
+                  <stop offset="50%" stopColor="#e0f2fe" />
+                  <stop offset="100%" stopColor="#bae6fd" />
+                </linearGradient>
+                <linearGradient id="componentGradientDark" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="rgba(14, 165, 233, 0.8)" />
+                  <stop offset="50%" stopColor="rgba(59, 130, 246, 0.6)" />
+                  <stop offset="100%" stopColor="rgba(37, 99, 235, 0.5)" />
+                </linearGradient>
+                
+                <linearGradient id="hookGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#f0fdf4" />
+                  <stop offset="50%" stopColor="#d1fae5" />
+                  <stop offset="100%" stopColor="#a7f3d0" />
+                </linearGradient>
+                <linearGradient id="hookGradientDark" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="rgba(34, 197, 94, 0.8)" />
+                  <stop offset="50%" stopColor="rgba(16, 185, 129, 0.6)" />
+                  <stop offset="100%" stopColor="rgba(5, 150, 105, 0.5)" />
+                </linearGradient>
+                
+                <filter id="glow">
+                  <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                  <feMerge> 
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+                
+                <filter id="nodeGlow">
+                  <feGaussianBlur stdDeviation="1" result="coloredBlur"/>
+                  <feMerge> 
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+              </defs>
+
               {/* Connections */}
               {connections.map(connection => {
                 const fromNode = nodes.find(n => n.id === connection.fromPageId)
                 const toNode = nodes.find(n => n.id === connection.toPageId)
                 if (!fromNode || !toNode) return null
 
-                const fromX = fromNode.x + 80
-                const fromY = fromNode.y + 30
-                const toX = toNode.x
-                const toY = toNode.y + 30
+                // Calculate connection points (center to center)
+                const fromCenterX = fromNode.x + 80
+                const fromCenterY = fromNode.y + 30
+                const toCenterX = toNode.x + 80
+                const toCenterY = toNode.y + 30
 
-                // Calculate arrow
-                const angle = Math.atan2(toY - fromY, toX - fromX)
-                const arrowLength = 10
-                const arrowX = toX - arrowLength * Math.cos(angle)
-                const arrowY = toY - arrowLength * Math.sin(angle)
+                // Calculate edge intersection points for cleaner connections
+                const dx = toCenterX - fromCenterX
+                const dy = toCenterY - fromCenterY
+                const distance = Math.sqrt(dx * dx + dy * dy)
+                
+                if (distance === 0) return null
+
+                // Normalize direction
+                const unitX = dx / distance
+                const unitY = dy / distance
+
+                // Calculate edge points
+                const nodeWidth = 160
+                const nodeHeight = 60
+                
+                // From node edge point
+                let fromX = fromCenterX
+                let fromY = fromCenterY
+                
+                if (Math.abs(unitX) > Math.abs(unitY)) {
+                  // Horizontal connection
+                  fromX = fromCenterX + (unitX > 0 ? nodeWidth/2 : -nodeWidth/2)
+                  fromY = fromCenterY
+                } else {
+                  // Vertical connection
+                  fromX = fromCenterX
+                  fromY = fromCenterY + (unitY > 0 ? nodeHeight/2 : -nodeHeight/2)
+                }
+
+                // To node edge point
+                let toX = toCenterX
+                let toY = toCenterY
+                
+                if (Math.abs(unitX) > Math.abs(unitY)) {
+                  // Horizontal connection
+                  toX = toCenterX + (unitX > 0 ? -nodeWidth/2 : nodeWidth/2)
+                  toY = toCenterY
+                } else {
+                  // Vertical connection
+                  toX = toCenterX
+                  toY = toCenterY + (unitY > 0 ? -nodeHeight/2 : nodeHeight/2)
+                }
+
+                // Create smooth curved path
+                const controlOffset = Math.min(Math.abs(dx), Math.abs(dy)) * 0.5 + 50
+                const controlX1 = fromX + (unitX * controlOffset)
+                const controlY1 = fromY
+                const controlX2 = toX - (unitX * controlOffset)
+                const controlY2 = toY
 
                 return (
                   <g key={connection.id}>
+                    {/* Shadow/glow effect */}
                     <path
-                      d={`M ${fromX} ${fromY} Q ${(fromX + toX) / 2} ${fromY - 50} ${toX} ${toY}`}
+                      d={`M ${fromX} ${fromY} C ${controlX1} ${controlY1}, ${controlX2} ${controlY2}, ${toX} ${toY}`}
                       fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      className="text-indigo-500 dark:text-indigo-400"
-                      markerEnd="url(#arrowhead)"
+                      stroke="rgba(30, 41, 59, 0.3)"
+                      strokeWidth="4"
+                      className="dark:stroke-slate-300/30"
                     />
-                    <defs>
-                      <marker
-                        id="arrowhead"
-                        markerWidth="10"
-                        markerHeight="7"
-                        refX="9"
-                        refY="3.5"
-                        orient="auto"
-                      >
-                        <polygon
-                          points="0 0, 10 3.5, 0 7"
-                          className="fill-indigo-500 dark:fill-indigo-400"
-                        />
-                      </marker>
-                    </defs>
+                    {/* Main connection line */}
+                    <path
+                      d={`M ${fromX} ${fromY} C ${controlX1} ${controlY1}, ${controlX2} ${controlY2}, ${toX} ${toY}`}
+                      fill="none"
+                      stroke="#334155"
+                      strokeWidth="2"
+                      className="dark:stroke-slate-300 transition-all hover:stroke-slate-700 dark:hover:stroke-slate-200"
+                      markerEnd="url(#arrowhead)"
+                      style={{ filter: 'url(#glow)' }}
+                    />
                   </g>
                 )
               })}
 
               {/* Temporary connection line while connecting */}
-              {isConnecting && connectingFrom && (
-                <path
-                  d={`M ${nodes.find(n => n.id === connectingFrom)?.x! + 80} ${nodes.find(n => n.id === connectingFrom)?.y! + 30} L ${mousePos.x} ${mousePos.y}`}
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeDasharray="5,5"
-                  className="text-indigo-400 dark:text-indigo-500"
-                />
-              )}
+              {isConnecting && connectingFrom && (() => {
+                const fromNode = nodes.find(n => n.id === connectingFrom)
+                if (!fromNode) return null
+                
+                const fromCenterX = fromNode.x + 80
+                const fromCenterY = fromNode.y + 30
+                
+                // Calculate direction to mouse
+                const dx = mousePos.x - fromCenterX
+                const dy = mousePos.y - fromCenterY
+                const distance = Math.sqrt(dx * dx + dy * dy)
+                
+                if (distance === 0) return null
+                
+                const unitX = dx / distance
+                const unitY = dy / distance
+                
+                // Start from edge of node
+                let fromX = fromCenterX
+                let fromY = fromCenterY
+                
+                const nodeWidth = 160
+                const nodeHeight = 60
+                
+                if (Math.abs(unitX) > Math.abs(unitY)) {
+                  fromX = fromCenterX + (unitX > 0 ? nodeWidth/2 : -nodeWidth/2)
+                  fromY = fromCenterY
+                } else {
+                  fromX = fromCenterX
+                  fromY = fromCenterY + (unitY > 0 ? nodeHeight/2 : -nodeHeight/2)
+                }
+                
+                return (
+                  <g>
+                    {/* Glow effect for preview */}
+                    <path
+                      d={`M ${fromX} ${fromY} L ${mousePos.x} ${mousePos.y}`}
+                      fill="none"
+                      stroke="rgba(30, 41, 59, 0.4)"
+                      strokeWidth="4"
+                      strokeDasharray="8,8"
+                      className="dark:stroke-slate-300/40"
+                    />
+                    {/* Main preview line */}
+                    <path
+                      d={`M ${fromX} ${fromY} L ${mousePos.x} ${mousePos.y}`}
+                      fill="none"
+                      stroke="#475569"
+                      strokeWidth="2"
+                      strokeDasharray="8,8"
+                      className="dark:stroke-slate-400 animate-pulse"
+                      markerEnd="url(#arrowhead)"
+                    />
+                  </g>
+                )
+              })()}
 
               {/* Nodes */}
               {nodes.map(node => (
-                <g key={node.id} className="cursor-pointer">
+                <g 
+                  key={node.id} 
+                  className="cursor-pointer transition-all duration-300 ease-out"
+                  style={{ 
+                    transform: draggedNode === node.id ? 'scale(1.08) rotate(2deg)' : 
+                              selectedNode === node.id ? 'scale(1.04)' : 'scale(1)',
+                    transformOrigin: `${node.x + 80}px ${node.y + 30}px`,
+                    filter: draggedNode === node.id ? 'drop-shadow(0 20px 35px rgba(0,0,0,0.15))' : 
+                           selectedNode === node.id ? 'drop-shadow(0 12px 20px rgba(0,0,0,0.1))' :
+                           'drop-shadow(0 6px 12px rgba(0,0,0,0.08))'
+                  }}
+                >
+                  {/* Node shadow */}
+                  <rect
+                    x={node.x + 2}
+                    y={node.y + 2}
+                    width="160"
+                    height="60"
+                    rx="12"
+                    className="fill-black/10 dark:fill-black/30"
+                    style={{ filter: 'blur(4px)' }}
+                  />
+                  {/* Main node */}
                   <rect
                     x={node.x}
                     y={node.y}
                     width="160"
                     height="60"
-                    rx="8"
-                    className={`${getNodeColor(node.type)} transition-all hover:shadow-lg ${
-                      selectedNode === node.id ? 'stroke-2' : 'stroke-1'
-                    } ${draggedNode === node.id ? 'opacity-80' : ''} ${
-                      isConnecting && connectingFrom === node.id ? 'stroke-2 stroke-yellow-400' : ''
+                    rx="12"
+                    fill={node.type === 'page' ? '#570083' : 
+                          node.type === 'component' ? 'url(#componentGradient)' : 
+                          node.type === 'hook' ? 'url(#hookGradient)' : '#f8fafc'}
+                    stroke={node.type === 'page' ? '#7c3aed' : 
+                            node.type === 'component' ? '#0ea5e9' : 
+                            node.type === 'hook' ? '#10b981' : '#64748b'}
+                    strokeWidth={selectedNode === node.id || (isConnecting && connectingFrom === node.id) ? '2' : '1.5'}
+                    className={`${
+                      selectedNode === node.id ? 'filter brightness-110' : ''
+                    } ${draggedNode === node.id ? 'opacity-95' : 'hover:opacity-90'} ${
+                      isConnecting && connectingFrom === node.id ? 'animate-pulse' : ''
                     }`}
                     onMouseDown={(e) => handleNodeMouseDown(node.id, e)}
-                    style={{ filter: draggedNode === node.id ? 'drop-shadow(0 8px 16px rgba(0,0,0,0.15))' : 'none' }}
+                    style={{ cursor: 'grab' }}
                   />
                   <foreignObject 
                     x={node.x + 8} 
@@ -544,17 +740,21 @@ export default function NavigationsPage({ navigationData }: NavigationsPageProps
                       }}
                     >
                       <div className={`p-1 rounded ${
-                        node.type === 'page' ? 'text-purple-600 dark:text-purple-400' :
+                        node.type === 'page' ? 'text-white' :
                         node.type === 'component' ? 'text-blue-600 dark:text-blue-400' :
                         'text-green-600 dark:text-green-400'
                       }`}>
                         {getNodeIcon(node.type)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm text-slate-900 dark:text-slate-100 truncate">
+                        <div className={`font-medium text-sm truncate ${
+                          node.type === 'page' ? 'text-white' : 'text-slate-900 dark:text-slate-100'
+                        }`}>
                           {node.name}
                         </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400 capitalize">
+                        <div className={`text-xs capitalize ${
+                          node.type === 'page' ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400'
+                        }`}>
                           {node.type}
                         </div>
                       </div>
@@ -581,60 +781,131 @@ export default function NavigationsPage({ navigationData }: NavigationsPageProps
       </div>
 
       {/* Instructions */}
-      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-xl p-4 sm:p-6">
-        <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 mb-3 sm:mb-4 text-center">
-          🎯 How to Use
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4 text-sm">
-          <div className="flex items-start gap-3 p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
-            <Move className="h-5 w-5 text-indigo-500 mt-0.5 flex-shrink-0" />
-            <div>
-              <div className="font-medium text-slate-900 dark:text-slate-100">Drag Pages</div>
-              <div className="text-slate-500 dark:text-slate-400">Click and drag page nodes to reposition them</div>
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 via-purple-50/30 to-pink-50/50 dark:from-indigo-900/10 dark:via-purple-900/10 dark:to-pink-900/10 rounded-xl"></div>
+        <div className="relative bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm border border-white/20 dark:border-slate-700/50 rounded-xl p-6 sm:p-8">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-3 px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full text-white font-semibold text-lg shadow-lg">
+              <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                🎯
+              </div>
+              How to Use
             </div>
           </div>
-          <div className="flex items-start gap-3 p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
-            <ArrowRight className="h-5 w-5 text-purple-500 mt-0.5 flex-shrink-0" />
-            <div>
-              <div className="font-medium text-slate-900 dark:text-slate-100">Connect Pages</div>
-              <div className="text-slate-500 dark:text-slate-400">Click "Connect" then click two pages to create arrows</div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
+            {/* Drag Pages */}
+            <div className="group relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-xl blur-xl group-hover:blur-2xl transition-all"></div>
+              <div className="relative bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-600 transition-all group-hover:shadow-xl group-hover:-translate-y-1">
+                <div className="flex items-center gap-4 mb-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg">
+                    <Move className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="font-bold text-lg text-slate-900 dark:text-slate-100">Drag Pages</div>
+                </div>
+                <div className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Click and drag page nodes to reposition them anywhere on the canvas
+                </div>
+              </div>
+            </div>
+
+            {/* Connect Pages */}
+            <div className="group relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl blur-xl group-hover:blur-2xl transition-all"></div>
+              <div className="relative bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-600 transition-all group-hover:shadow-xl group-hover:-translate-y-1">
+                <div className="flex items-center gap-4 mb-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
+                    <ArrowRight className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="font-bold text-lg text-slate-900 dark:text-slate-100">Connect Pages</div>
+                </div>
+                <div className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Click "Connect" then click two pages to create curved connection arrows
+                </div>
+              </div>
+            </div>
+
+            {/* Zoom & Pan */}
+            <div className="group relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-xl blur-xl group-hover:blur-2xl transition-all"></div>
+              <div className="relative bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 transition-all group-hover:shadow-xl group-hover:-translate-y-1">
+                <div className="flex items-center gap-4 mb-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
+                    <ZoomIn className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="font-bold text-lg text-slate-900 dark:text-slate-100">Zoom & Pan</div>
+                </div>
+                <div className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Mouse wheel to zoom, drag empty areas to pan around the canvas
+                </div>
+              </div>
+            </div>
+
+            {/* Clear Connections */}
+            <div className="group relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-red-500/20 to-orange-500/20 rounded-xl blur-xl group-hover:blur-2xl transition-all"></div>
+              <div className="relative bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-red-300 dark:hover:border-red-600 transition-all group-hover:shadow-xl group-hover:-translate-y-1">
+                <div className="flex items-center gap-4 mb-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
+                    <Trash2 className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="font-bold text-lg text-slate-900 dark:text-slate-100">Clear Connections</div>
+                </div>
+                <div className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Remove all connection arrows between pages with one click
+                </div>
+              </div>
+            </div>
+
+            {/* Fit View */}
+            <div className="group relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-yellow-500/20 rounded-xl blur-xl group-hover:blur-2xl transition-all"></div>
+              <div className="relative bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-orange-300 dark:hover:border-orange-600 transition-all group-hover:shadow-xl group-hover:-translate-y-1">
+                <div className="flex items-center gap-4 mb-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-xl flex items-center justify-center shadow-lg">
+                    <Maximize2 className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="font-bold text-lg text-slate-900 dark:text-slate-100">Fit View</div>
+                </div>
+                <div className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Reset zoom and pan to default view with perfect centering
+                </div>
+              </div>
+            </div>
+
+            {/* Reset All */}
+            <div className="group relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-xl blur-xl group-hover:blur-2xl transition-all"></div>
+              <div className="relative bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-green-300 dark:hover:border-green-600 transition-all group-hover:shadow-xl group-hover:-translate-y-1">
+                <div className="flex items-center gap-4 mb-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg">
+                    <RotateCcw className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="font-bold text-lg text-slate-900 dark:text-slate-100">Reset All</div>
+                </div>
+                <div className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Restore positions, connections, and view to original state
+                </div>
+              </div>
             </div>
           </div>
-          <div className="flex items-start gap-3 p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
-            <ZoomIn className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
-            <div>
-              <div className="font-medium text-slate-900 dark:text-slate-100">Zoom & Pan</div>
-              <div className="text-slate-500 dark:text-slate-400">Mouse wheel to zoom, drag canvas to pan around</div>
-            </div>
-          </div>
-          <div className="flex items-start gap-3 p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
-            <Trash2 className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
-            <div>
-              <div className="font-medium text-slate-900 dark:text-slate-100">Clear Connections</div>
-              <div className="text-slate-500 dark:text-slate-400">Remove all connection arrows between pages</div>
-            </div>
-          </div>
-          <div className="flex items-start gap-3 p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
-            <Maximize2 className="h-5 w-5 text-orange-500 mt-0.5 flex-shrink-0" />
-            <div>
-              <div className="font-medium text-slate-900 dark:text-slate-100">Fit View</div>
-              <div className="text-slate-500 dark:text-slate-400">Reset zoom and pan to default view</div>
-            </div>
-          </div>
-          <div className="flex items-start gap-3 p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
-            <RotateCcw className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-            <div>
-              <div className="font-medium text-slate-900 dark:text-slate-100">Reset All</div>
-              <div className="text-slate-500 dark:text-slate-400">Restore positions, connections, and view</div>
-            </div>
-          </div>
-        </div>
-        <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-700">
-          <div className="flex items-start gap-2">
-            <div className="w-2 h-2 bg-yellow-400 rounded-full mt-2 flex-shrink-0"></div>
-            <div className="text-sm">
-              <div className="font-medium text-yellow-800 dark:text-yellow-200">Auto Connections</div>
-              <div className="text-yellow-700 dark:text-yellow-300">Pages are automatically connected based on relationships (HomePage to others, related pages, etc.)</div>
+
+          {/* Pro Tip */}
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-amber-400/20 to-orange-400/20 rounded-xl blur-lg"></div>
+            <div className="relative bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 p-6 rounded-xl border border-amber-200 dark:border-amber-700/50">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-400 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
+                  ✨
+                </div>
+                <div>
+                  <div className="font-bold text-lg text-amber-900 dark:text-amber-200 mb-2">Smart Auto-Connections</div>
+                  <div className="text-amber-800 dark:text-amber-300 leading-relaxed">
+                    Pages are automatically connected based on detected relationships - HomePage connects to others, dynamic pages link together, and related pages find each other intelligently.
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
