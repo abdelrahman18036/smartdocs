@@ -88,26 +88,26 @@ export default function DevDependenciesPage({ devDependencies }: DevDependencies
   }, {} as Record<string, number>)
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Enhanced Header */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 via-white to-orange-50/50 dark:from-purple-900/10 dark:via-slate-900 dark:to-orange-900/10 -z-10"></div>
         <div className="relative">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="p-3 rounded-xl bg-gradient-to-r from-purple-500 to-orange-500 shadow-lg">
-                <Wrench className="h-6 w-6 text-white" />
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              <div className="p-2 sm:p-3 rounded-xl bg-gradient-to-r from-purple-500 to-orange-500 shadow-lg">
+                <Wrench className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 via-purple-800 to-orange-800 dark:from-slate-100 dark:via-purple-300 dark:to-orange-300 bg-clip-text text-transparent">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-slate-900 via-purple-800 to-orange-800 dark:from-slate-100 dark:via-purple-300 dark:to-orange-300 bg-clip-text text-transparent">
                   🛠️ Dev Dependencies
                 </h1>
-                <p className="text-lg text-slate-600 dark:text-slate-400 mt-2">
+                <p className="text-sm sm:text-base lg:text-lg text-slate-600 dark:text-slate-400 mt-1 sm:mt-2">
                   Development tools and build utilities
                 </p>
               </div>
             </div>
-            <div className="bg-white dark:bg-slate-800 rounded-lg px-4 py-2 shadow-lg border border-slate-200 dark:border-slate-700">
+            <div className="bg-white dark:bg-slate-800 rounded-lg px-3 sm:px-4 py-2 shadow-lg border border-slate-200 dark:border-slate-700 self-start lg:self-auto">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
                 <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
@@ -118,11 +118,11 @@ export default function DevDependenciesPage({ devDependencies }: DevDependencies
           </div>
           
           {/* Category Stats */}
-          <div className="flex flex-wrap items-center gap-3 mt-6">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-3 mt-4 sm:mt-6">
             {Object.entries(totalStats).map(([category, count]) => (
-              <div key={category} className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${getCategoryColor(category)}`}>
-                {getCategoryIcon(category, 'h-4 w-4')}
-                <span className="capitalize">{category}</span>
+              <div key={category} className={`inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium ${getCategoryColor(category)}`}>
+                {getCategoryIcon(category, 'h-3 w-3 sm:h-4 sm:w-4')}
+                <span className="capitalize truncate">{category}</span>
                 <span className="bg-white/20 dark:bg-black/20 px-2 py-0.5 rounded-full text-xs">{count}</span>
               </div>
             ))}
@@ -131,43 +131,45 @@ export default function DevDependenciesPage({ devDependencies }: DevDependencies
       </div>
 
       {/* Enhanced Dev Dependencies with Pagination */}
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8">
         {Object.keys(groupedCurrentItems).length > 0 ? (
           Object.entries(groupedCurrentItems).map(([category, deps]) => (
-            <div key={category} className="space-y-6">
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg bg-gradient-to-r ${getCategoryGradient(category)} shadow-md`}>
-                  {getCategoryIcon(category, 'h-5 w-5 text-white')}
+            <div key={category} className="space-y-4 sm:space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg bg-gradient-to-r ${getCategoryGradient(category)} shadow-md`}>
+                    {getCategoryIcon(category, 'h-4 w-4 sm:h-5 sm:w-5 text-white')}
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100">
+                    {category.charAt(0).toUpperCase() + category.slice(1)} Tools
+                  </h2>
                 </div>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-                  {category.charAt(0).toUpperCase() + category.slice(1)} Tools
-                </h2>
-                <span className="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-3 py-1 rounded-full text-sm font-medium">
+                <span className="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-3 py-1 rounded-full text-sm font-medium self-start sm:self-auto">
                   {deps.length} of {totalStats[category]}
                 </span>
               </div>
               
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {deps.map((dep, index) => {
                   const actualIndex = currentItems.indexOf(dep) + 1;
                   
                   return (
                     <div
                       key={dep.name}
-                      className="group relative overflow-hidden rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col h-full min-h-[320px]"
+                      className="group relative overflow-hidden rounded-lg sm:rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col h-full min-h-[280px] sm:min-h-[320px]"
                     >
                       {/* Category Gradient Background */}
                       <div className={`absolute inset-0 bg-gradient-to-br ${getCategoryGradient(dep.category || 'other')} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
                       
                       {/* Header */}
-                      <div className="p-6 relative z-10 flex-1">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-lg bg-gradient-to-r ${getCategoryGradient(dep.category || 'other')} shadow-md group-hover:shadow-lg transition-shadow`}>
-                              {getCategoryIcon(dep.category || 'other', 'h-4 w-4 text-white')}
+                      <div className="p-4 sm:p-6 relative z-10 flex-1">
+                        <div className="flex items-start justify-between mb-3 sm:mb-4">
+                          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                            <div className={`p-1.5 sm:p-2 rounded-lg bg-gradient-to-r ${getCategoryGradient(dep.category || 'other')} shadow-md group-hover:shadow-lg transition-shadow flex-shrink-0`}>
+                              {getCategoryIcon(dep.category || 'other', 'h-3 w-3 sm:h-4 sm:w-4 text-white')}
                             </div>
-                            <div>
-                              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                            <div className="min-w-0 flex-1">
+                              <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors truncate">
                                 {dep.name}
                               </h3>
                               <span className="text-xs text-slate-500 dark:text-slate-400">#{actualIndex}</span>
@@ -178,42 +180,44 @@ export default function DevDependenciesPage({ devDependencies }: DevDependencies
                               href={dep.homepage}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-purple-100 dark:hover:bg-purple-900 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                              className="p-1.5 sm:p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-purple-100 dark:hover:bg-purple-900 hover:text-purple-600 dark:hover:text-purple-400 transition-colors flex-shrink-0"
                             >
-                              <ExternalLink className="h-4 w-4" />
+                              <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4" />
                             </a>
                           )}
                         </div>
 
                         {/* Version and Category */}
-                        <div className="space-y-3 mb-4">
-                          <div className="flex flex-wrap gap-2">
-                            <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 border border-purple-200 dark:border-purple-700">
+                        <div className="space-y-2 sm:space-y-3 mb-3 sm:mb-4">
+                          <div className="flex flex-wrap gap-1 sm:gap-2">
+                            <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-semibold bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 border border-purple-200 dark:border-purple-700">
                               📦 v{dep.version}
                             </span>
-                            <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold ${getCategoryColor(dep.category || 'other')}`}>
+                            <span className={`inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-semibold ${getCategoryColor(dep.category || 'other')}`}>
                               {getCategoryIcon(dep.category || 'other', 'h-3 w-3')}
-                              {dep.category}
+                              <span className="truncate">{dep.category}</span>
                             </span>
                           </div>
                           
-                          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+                          <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs text-slate-500 dark:text-slate-400">
                             {dep.downloads && (
                               <div className="flex items-center gap-1">
                                 <Download className="h-3 w-3 text-blue-500" />
-                                <span>{dep.downloads.toLocaleString()}</span>
+                                <span className="hidden sm:inline">{dep.downloads.toLocaleString()}</span>
+                                <span className="sm:hidden">{(dep.downloads / 1000).toFixed(0)}k</span>
                               </div>
                             )}
                             {dep.stars && (
                               <div className="flex items-center gap-1">
                                 <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
-                                <span>{dep.stars.toLocaleString()}</span>
+                                <span className="hidden sm:inline">{dep.stars.toLocaleString()}</span>
+                                <span className="sm:hidden">{(dep.stars / 1000).toFixed(0)}k</span>
                               </div>
                             )}
                             {dep.lastUpdate && (
                               <div className="flex items-center gap-1">
                                 <Calendar className="h-3 w-3" />
-                                <span>{dep.lastUpdate}</span>
+                                <span className="truncate">{dep.lastUpdate}</span>
                               </div>
                             )}
                           </div>
@@ -221,7 +225,7 @@ export default function DevDependenciesPage({ devDependencies }: DevDependencies
                         
                         {/* Description */}
                         {dep.description && (
-                          <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-3 leading-relaxed">
+                          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 line-clamp-3 leading-relaxed">
                             {dep.description}
                           </p>
                         )}

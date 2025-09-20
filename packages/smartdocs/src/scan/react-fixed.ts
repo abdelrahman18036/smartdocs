@@ -74,7 +74,8 @@ const loadOverrides = async (projectRoot: string): Promise<OverridesConfig> => {
   
   try {
     const content = await fs.readFile(overridesPath, 'utf-8');
-    return JSON.parse(content);
+    const config = JSON.parse(content);
+    return config;
   } catch (error) {
     // Return empty config if file doesn't exist
     return {
@@ -95,9 +96,28 @@ const saveOverrides = async (projectRoot: string, config: OverridesConfig): Prom
 };
 
 const findOverride = (overrides: ComponentOverride[], filePath: string, componentName: string): ComponentOverride | undefined => {
-  return overrides.find(override => 
-    override.filePath === filePath && override.componentName === componentName
-  );
+  // Normalize paths for comparison (handle both relative and absolute paths)
+  const normalizePathForComparison = (path: string) => {
+    return path.replace(/\\/g, '/').toLowerCase();
+  };
+
+  const normalizedFilePath = normalizePathForComparison(filePath);
+  
+  return overrides.find(override => {
+    const normalizedOverridePath = normalizePathForComparison(override.filePath);
+    
+    // Try exact match first
+    if (normalizedOverridePath === normalizedFilePath && override.componentName === componentName) {
+      return true;
+    }
+    
+    // Try relative path matching (in case one is absolute and other is relative)
+    if (normalizedFilePath.endsWith(normalizedOverridePath) || normalizedOverridePath.endsWith(normalizedFilePath)) {
+      return override.componentName === componentName;
+    }
+    
+    return false;
+  });
 };
 
 // Export function to add/update overrides (for API use)
@@ -550,10 +570,9 @@ const isReferencedInRoutes = async (filePath: string, componentName: string): Pr
 };
 
 // Helper function to analyze code content and determine type
-const analyzeCodeContent = async (filePath: string, name: string, code?: string, projectRoot?: string): Promise<'component' | 'hook' | 'page'> => {
+const analyzeCodeContent = async (filePath: string, name: string, code?: string, overridesConfig?: OverridesConfig): Promise<'component' | 'hook' | 'page'> => {
   // Check for user overrides first
-  if (projectRoot) {
-    const overridesConfig = await loadOverrides(projectRoot);
+  if (overridesConfig) {
     const override = findOverride(overridesConfig.overrides, filePath, name);
     if (override) {
       return override.overrideType;
@@ -743,6 +762,12 @@ function getHookCategory(hookName: string): ComponentDoc['hookCategory'] {
 export async function scanComponents(patterns: string[], projectRoot?: string): Promise<ComponentDoc[]> {
   // Determine project root if not provided
   const rootDir = projectRoot || process.cwd();
+  
+  // Load overrides once at the start of scanning
+  const overridesConfig = await loadOverrides(rootDir);
+  if (overridesConfig.overrides.length > 0) {
+    console.log(`✅ Loaded ${overridesConfig.overrides.length} component type overrides`);
+  }
   const files = await globby(patterns, { 
     gitignore: true, 
     absolute: true,
@@ -870,7 +895,7 @@ export async function scanComponents(patterns: string[], projectRoot?: string): 
         for (const p of parsed) {
           const name = p.displayName;
           // Determine type based on code content, not directory location
-          const docType = await analyzeCodeContent(file, name, code, rootDir);
+          const docType = await analyzeCodeContent(file, name, code, overridesConfig);
           
           // Enhanced props extraction with safe defaultValue serialization
           const props = Object.entries(p.props ?? {}).map(([propName, pr]: [string, any]) => {
@@ -974,7 +999,7 @@ export async function scanComponents(patterns: string[], projectRoot?: string): 
         for (const c of components) {
           const name = c.displayName || inferNameFromPath(file);
           // Determine type based on code content, not directory location
-          const docType = await analyzeCodeContent(file, name, code, rootDir);
+          const docType = await analyzeCodeContent(file, name, code, overridesConfig);
           
           // Extract real usage examples for components or hooks
           const realUsageExamples = docType === 'component' ? 

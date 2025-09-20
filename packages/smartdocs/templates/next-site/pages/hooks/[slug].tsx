@@ -22,24 +22,26 @@ export default function HookPage({ component }: HookPageProps) {
         </p>
         
         {/* Hook Information */}
-        <div className="flex gap-4 flex-wrap items-center">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 sm:flex-wrap sm:items-center">
           <TypeOverrideControl
             componentName={component.displayName}
             filePath={component.filePath}
             currentType={component.type || 'hook'}
           />
-          {component.hookCategory && (
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-              Category: {component.hookCategory}
+          <div className="flex flex-wrap gap-2 sm:gap-3">
+            {component.hookCategory && (
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                Category: {component.hookCategory}
+              </span>
+            )}
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+              component.isBuiltInHook 
+                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+            }`}>
+              {component.isBuiltInHook ? 'React Built-in' : 'Custom Hook'}
             </span>
-          )}
-          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-            component.isBuiltInHook 
-              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-              : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
-          }`}>
-            {component.isBuiltInHook ? 'React Built-in' : 'Custom Hook'}
-          </span>
+          </div>
         </div>
       </div>
 
@@ -186,33 +188,39 @@ export default function HookPage({ component }: HookPageProps) {
               const actualIndex = (currentPage - 1) * itemsPerPage + index + 1;
               
               return (
-                <div key={index} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-6 shadow-sm">
+                <div key={index} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-4 sm:p-6 shadow-sm">
                   <div className="space-y-4">
                     {/* Header with file and location */}
-                    <div className="flex flex-wrap items-center gap-4 pb-4 border-b border-slate-200 dark:border-slate-700">
-                      <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
-                        Usage {actualIndex}
-                      </h3>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="font-mono bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-slate-600 dark:text-slate-400">
-                      📁 {usage.file}
-                    </span>
-                    <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
-                      Line {usage.line}
-                    </span>
-                    {usage.context && usage.context !== 'global' && (
-                      <span className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded">
-                        in {usage.context}()
-                      </span>
-                    )}
-                  </div>
-                </div>
+                    <div className="pb-4 border-b border-slate-200 dark:border-slate-700">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+                        <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
+                          Usage {actualIndex}
+                        </h3>
+                      </div>
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <span className="font-mono bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-slate-600 dark:text-slate-400 text-sm truncate max-w-full">
+                            📁 {usage.file}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded text-sm">
+                            Line {usage.line}
+                          </span>
+                          {usage.context && usage.context !== 'global' && (
+                            <span className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded text-sm">
+                              in {usage.context}()
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                 
                 {/* Code Example */}
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300">Code:</h4>
                   <div className="relative">
-                    <pre className="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-x-auto text-sm border">
+                    <pre className="bg-slate-900 text-slate-100 p-3 sm:p-4 rounded-lg overflow-x-auto text-xs sm:text-sm border whitespace-pre-wrap break-words sm:whitespace-pre sm:break-normal">
                       <code className="language-typescript">{usage.code}</code>
                     </pre>
                   </div>
@@ -220,11 +228,11 @@ export default function HookPage({ component }: HookPageProps) {
                 
                 {/* Destructuring Info */}
                 {usage.destructuring && usage.destructuring.length > 0 && (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300">Variables Extracted:</h4>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                       {usage.destructuring.map((variable: string, idx: number) => (
-                        <span key={idx} className="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded text-sm font-mono">
+                        <span key={idx} className="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-3 py-2 rounded text-sm font-mono inline-block">
                           {variable}
                         </span>
                       ))}
@@ -234,33 +242,35 @@ export default function HookPage({ component }: HookPageProps) {
                 
                 {/* Parameters Used */}
                 {usage.parameters && usage.parameters.length > 0 && (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300">Parameters Used:</h4>
-                    <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded border border-slate-200 dark:border-slate-700">
-                      <div className="flex flex-wrap gap-2">
+                    <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded border border-slate-200 dark:border-slate-700">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                         {usage.parameters.map((param: any, idx: number) => (
-                          <span key={idx} className="bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 px-2 py-1 rounded text-sm font-mono">
+                          <span key={idx} className="bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 px-3 py-2 rounded text-sm font-mono inline-block break-words">
                             {typeof param === 'object' ? JSON.stringify(param) : String(param)}
                           </span>
                         ))}
                       </div>
-          </div>
-        </div>
-      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Default Values */}
                 {usage.defaults && Object.keys(usage.defaults).length > 0 && (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300">Default Values:</h4>
-                    <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded border border-slate-200 dark:border-slate-700">
-                      {Object.entries(usage.defaults).map(([key, value]: [string, any]) => (
-                        <div key={key} className="flex items-center gap-2 text-sm">
-                          <span className="font-mono text-slate-600 dark:text-slate-400">{key}:</span>
-                          <span className="font-mono bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 px-2 py-1 rounded">
-                            {typeof value === 'object' ? JSON.stringify(value) : String(value)}
-                          </span>
-                        </div>
-                      ))}
+                    <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded border border-slate-200 dark:border-slate-700">
+                      <div className="space-y-2">
+                        {Object.entries(usage.defaults).map(([key, value]: [string, any]) => (
+                          <div key={key} className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm">
+                            <span className="font-mono text-slate-600 dark:text-slate-400 font-medium min-w-0 flex-shrink-0">{key}:</span>
+                            <span className="font-mono bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 px-3 py-2 rounded break-words">
+                              {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
