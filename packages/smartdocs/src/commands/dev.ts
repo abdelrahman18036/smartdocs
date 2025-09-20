@@ -3,8 +3,9 @@ import path from "node:path";
 import { spawn } from "node:child_process";
 import { watch } from "chokidar";
 import { ConfigSchema, type Config } from "../config";
-import { scanComponents } from "../scan/react-fixed";
+import { scanComponents, type ComponentDoc } from "../scan/react-fixed";
 import { writeComponentPages } from "../generate/mdx";
+import { analyzeComponentUsageInPages } from "../scan/usage-analysis";
 
 export async function dev(opts: { port: string }) {
   const cfgPath = path.resolve(process.cwd(), "smartdocs.config.ts");
@@ -58,12 +59,15 @@ async function buildDocumentation(config: Config): Promise<void> {
   const projectRoot = process.cwd();
   const components = await scanComponents(patterns, projectRoot);
   
+  // Analyze component usage for pages at build time
+  console.log("🔍 Analyzing component usage in pages...");
+  const componentsWithUsage = await analyzeComponentUsageInPages(components, projectRoot);
 
   const contentDir = path.join(config.outDir, "content");
   await fs.mkdir(contentDir, { recursive: true });
 
-  await writeComponentPages(contentDir, components);
-  await fs.writeFile(path.join(contentDir, "search.json"), JSON.stringify({ components }, null, 2));
+  await writeComponentPages(contentDir, componentsWithUsage);
+  await fs.writeFile(path.join(contentDir, "search.json"), JSON.stringify({ components: componentsWithUsage }, null, 2));
   
   console.log("✓ Updated documentation");
 }
@@ -135,3 +139,4 @@ async function loadConfig(p: string): Promise<Config> {
   }
   return ConfigSchema.parse(userCfg);
 }
+

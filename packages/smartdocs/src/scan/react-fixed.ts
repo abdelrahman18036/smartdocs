@@ -59,6 +59,13 @@ export type ComponentDoc = {
     returns?: { type: string; description: string; };
     examples?: string[];
   };
+  // Component usage tracking for pages
+  usedComponents?: Array<{
+    name: string;
+    type: string;
+    count: number;
+    firstUsage: string;
+  }>;
 };
 
 const isTs = (f: string) => /\.(ts|tsx)$/.test(f);

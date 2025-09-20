@@ -2,8 +2,9 @@ import { globby } from "globby";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { ConfigSchema, type Config } from "../config";
-import { scanComponents } from "../scan/react-fixed";
+import { scanComponents, type ComponentDoc } from "../scan/react-fixed";
 import { writeComponentPages } from "../generate/mdx";
+import { analyzeComponentUsageInPages } from "../scan/usage-analysis";
 
 export async function build(opts: { config?: string }) {
   const cfgPath = path.resolve(process.cwd(), opts.config ?? "smartdocs.config.ts");
@@ -16,15 +17,18 @@ export async function build(opts: { config?: string }) {
   const projectRoot = process.cwd();
   const components = await scanComponents(patterns, projectRoot);
   
+  // 2) Analyze component usage for pages at build time
+  console.log("\n🔍 Analyzing component usage in pages...");
+  const componentsWithUsage = await analyzeComponentUsageInPages(components, projectRoot);
 
-  // 2) Generate MDX files and search index in temp directory first
+  // 3) Generate MDX files and search index in temp directory first
   const tempContentDir = path.join(config.outDir, "temp-content");
   await fs.rm(tempContentDir, { recursive: true, force: true });
   await fs.mkdir(tempContentDir, { recursive: true });
 
   console.log("\n📝 Generating MDX documentation...");
-  await writeComponentPages(tempContentDir, components);
-  await fs.writeFile(path.join(tempContentDir, "search.json"), JSON.stringify({ components }, null, 2));
+  await writeComponentPages(tempContentDir, componentsWithUsage);
+  await fs.writeFile(path.join(tempContentDir, "search.json"), JSON.stringify({ components: componentsWithUsage }, null, 2));
   
   console.log("✓ Generated MDX files");
 
@@ -98,7 +102,7 @@ async function buildNextSite(siteDir: string, outputDir: string): Promise<void> 
       
       if (!hasNodeModules || !hasPackageLock) {
         // Install dependencies first
-        console.log("\n📦 Installing dependencies...");
+        console.log("📦 Installing dependencies...");
         const install = spawn("npm", ["install"], { 
           cwd: siteDir, 
           stdio: "inherit",
@@ -160,7 +164,7 @@ async function buildNextSiteInPlace(buildDir: string): Promise<void> {
       
       if (!hasNodeModules || !hasPackageLock) {
         // Install dependencies first
-        console.log("\n📦 Installing dependencies...");
+        console.log("📦 Installing dependencies...");
         const install = spawn("npm", ["install"], { 
           cwd: buildDir, 
           stdio: "inherit",
@@ -236,3 +240,4 @@ async function loadConfig(p: string): Promise<Config> {
   }
   return ConfigSchema.parse(userCfg);
 }
+
