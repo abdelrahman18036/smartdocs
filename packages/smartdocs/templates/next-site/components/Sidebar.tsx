@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ChevronRight, ChevronDown, Component, Zap, FileText, Code, Home, Package, Globe, Map } from 'lucide-react'
+import { ChevronRight, ChevronDown, Component, Zap, FileText, Code, Home, Package, Globe, Map, Navigation } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 
@@ -166,11 +166,11 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
     <>
       {/* Desktop Sidebar */}
       <aside className="hidden lg:block sticky top-16 h-[calc(100vh-4rem)] w-64 border-r bg-slate-50/50 dark:bg-slate-900/50 overflow-y-auto backdrop-blur-sm shrink-0">
-        <div className="p-4">
+      <div className="p-4">
           <nav className="space-y-3">
-            <div>
-              <Link 
-                href="/"
+          <div>
+            <Link 
+              href="/"
                 className={`flex items-center rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 group relative ${
                   router.pathname === '/' 
                     ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/25' 
@@ -213,6 +213,29 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
               </Link>
             </div>
 
+            {/* Navigations Link - Always Visible */}
+            <div>
+              <Link 
+                href="/navigations"
+                className={`flex items-center rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 group relative ${
+                  router.pathname === '/navigations' || router.asPath.startsWith('/navigations')
+                    ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-lg shadow-purple-500/25' 
+                    : 'hover:bg-white dark:hover:bg-slate-800 hover:shadow-md text-slate-700 dark:text-slate-300'
+                }`}
+              >
+                {(router.pathname === '/navigations' || router.asPath.startsWith('/navigations')) && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl opacity-100"></div>
+                )}
+                <Navigation className={`mr-3 h-4 w-4 relative z-10 ${
+                  router.pathname === '/navigations' || router.asPath.startsWith('/navigations') ? 'text-white' : 'text-purple-500 group-hover:text-purple-600'
+                }`} />
+                <span className="relative z-10">Navigations</span>
+                {(router.pathname === '/navigations' || router.asPath.startsWith('/navigations')) && (
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 w-2 h-2 bg-white/30 rounded-full animate-pulse"></div>
+                )}
+            </Link>
+          </div>
+
           {Object.entries(groupedComponents).map(([type, items]) => {
             const isExpanded = expandedSections.has(type)
             const typeLabel = type.charAt(0).toUpperCase() + type.slice(1) + 's'
@@ -254,7 +277,7 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
                   <div className="flex items-center relative z-10">
                     <div className={`p-1.5 rounded-lg bg-gradient-to-r ${getSectionColor(type)} ${hasActiveChild ? 'shadow-lg' : 'shadow-md'}`}>
                       <div className="text-white">
-                        {getIcon(type)}
+                    {getIcon(type)}
                       </div>
                     </div>
                     <span className="ml-3">{typeLabel}</span>
@@ -286,8 +309,8 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
                       <div className={`absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b ${getSectionColor(type)} rounded-full`}></div>
                     )}
                     <div className="space-y-1 py-1">
-                      {items.map((item) => {
-                        const href = `/${type}s/${item.displayName.toLowerCase()}`
+                    {items.map((item) => {
+                      const href = `/${type}s/${item.displayName.toLowerCase()}`
                         const currentPath = router.asPath.split('?')[0].split('#')[0]
                         const currentPathname = router.pathname
                         const isActive = currentPath === href || 
@@ -541,6 +564,30 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
               </Link>
             </div>
 
+            {/* Navigations Link - Always Visible */}
+            <div>
+              <Link 
+                href="/navigations"
+                onClick={handleNavClick}
+                className={`flex items-center rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 group relative ${
+                  router.pathname === '/navigations' || router.asPath.startsWith('/navigations')
+                    ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-lg shadow-purple-500/25' 
+                    : 'hover:bg-white dark:hover:bg-slate-800 hover:shadow-md text-slate-700 dark:text-slate-300'
+                }`}
+              >
+                {(router.pathname === '/navigations' || router.asPath.startsWith('/navigations')) && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl opacity-100"></div>
+                )}
+                <Navigation className={`mr-3 h-4 w-4 relative z-10 ${
+                  router.pathname === '/navigations' || router.asPath.startsWith('/navigations') ? 'text-white' : 'text-purple-500 group-hover:text-purple-600'
+                }`} />
+                <span className="relative z-10">Navigations</span>
+                {(router.pathname === '/navigations' || router.asPath.startsWith('/navigations')) && (
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 w-2 h-2 bg-white/30 rounded-full animate-pulse"></div>
+                )}
+              </Link>
+            </div>
+
             {/* Mobile Navigation - Same content as desktop but with click handlers */}
             {Object.entries(groupedComponents).map(([type, items]) => {
               const isExpanded = expandedSections.has(type)
@@ -699,8 +746,8 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
                 
                 return (
                   <>
-                    <button
-                      onClick={() => toggleSection('packages')}
+            <button
+              onClick={() => toggleSection('packages')}
                       className={`flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 group relative ${
                         hasActivePackage 
                           ? 'bg-white dark:bg-slate-800 shadow-lg text-slate-900 dark:text-slate-100' 
@@ -713,10 +760,10 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
                       <div className="flex items-center relative z-10">
                         <div className={`p-1.5 rounded-lg bg-gradient-to-r from-slate-500 to-slate-600 ${hasActivePackage ? 'shadow-lg' : 'shadow-md'}`}>
                           <div className="text-white">
-                            {getIcon('packages')}
+                {getIcon('packages')}
                           </div>
                         </div>
-                        <span className="ml-3">Packages</span>
+                <span className="ml-3">Packages</span>
                         <span className={`ml-2 px-2 py-0.5 text-xs rounded-full font-medium ${
                           hasActivePackage 
                             ? 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300' 
@@ -724,18 +771,18 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
                         }`}>
                           {packageCount}
                         </span>
-                      </div>
-                      <ChevronRight 
+              </div>
+              <ChevronRight 
                         className={`h-4 w-4 transition-all duration-200 relative z-10 ${
                           isPackagesExpanded ? 'rotate-90 text-slate-700 dark:text-slate-300' : 'text-slate-400'
-                        }`} 
-                      />
+                }`} 
+              />
                       {hasActivePackage && (
                         <div className="absolute right-2 top-1/2 -translate-y-1/2 w-2 h-2 bg-slate-500 rounded-full animate-pulse"></div>
                       )}
-                    </button>
-                    
-                    <div className={`overflow-hidden transition-all duration-300 ${
+            </button>
+            
+            <div className={`overflow-hidden transition-all duration-300 ${
                       isPackagesExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
                     }`}>
                       <div className="ml-6 space-y-1 border-l-2 border-slate-200 dark:border-slate-700 pl-4 relative">
@@ -743,8 +790,8 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
                           <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-slate-500 to-slate-600 rounded-full"></div>
                         )}
                         
-                        <Link
-                          href="/packages/dependencies"
+                <Link
+                  href="/packages/dependencies"
                           onClick={handleNavClick}
                           className={`block rounded-lg px-3 py-2.5 text-sm transition-all duration-200 relative group ${
                             router.asPath === '/packages/dependencies' || router.pathname === '/packages/dependencies'
@@ -767,16 +814,16 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
                                 <div className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-pulse"></div>
                               )}
                             </div>
-                          </div>
+                  </div>
                           <div className={`text-xs mt-1.5 relative z-10 ${
                             (router.asPath === '/packages/dependencies' || router.pathname === '/packages/dependencies') ? 'text-slate-600 dark:text-slate-400' : 'text-slate-500 dark:text-slate-500'
                           }`}>
-                            Production dependencies
-                          </div>
-                        </Link>
-                        
-                        <Link
-                          href="/packages/dev-dependencies"
+                    Production dependencies
+                  </div>
+                </Link>
+                
+                <Link
+                  href="/packages/dev-dependencies"
                           onClick={handleNavClick}
                           className={`block rounded-lg px-3 py-2.5 text-sm transition-all duration-200 relative group ${
                             router.asPath === '/packages/dev-dependencies' || router.pathname === '/packages/dev-dependencies'
@@ -799,22 +846,22 @@ export function Sidebar({ isMobileMenuOpen = false, onMobileMenuClose }: Sidebar
                                 <div className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-pulse"></div>
                               )}
                             </div>
-                          </div>
+                  </div>
                           <div className={`text-xs mt-1.5 relative z-10 ${
                             (router.asPath === '/packages/dev-dependencies' || router.pathname === '/packages/dev-dependencies') ? 'text-slate-600 dark:text-slate-400' : 'text-slate-500 dark:text-slate-500'
                           }`}>
-                            Development dependencies
-                          </div>
-                        </Link>
-                      </div>
-                    </div>
+                    Development dependencies
+                  </div>
+                </Link>
+              </div>
+            </div>
                   </>
                 )
               })()}
-            </div>
-          </nav>
-        </div>
-      </aside>
+          </div>
+        </nav>
+      </div>
+    </aside>
     </>
   )
 }
