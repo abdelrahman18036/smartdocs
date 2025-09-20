@@ -9,11 +9,12 @@ export async function build(opts: { config?: string }) {
   const cfgPath = path.resolve(process.cwd(), opts.config ?? "smartdocs.config.ts");
   const config = await loadConfig(cfgPath);
 
-  console.log("📂 Scanning project files...");
+  console.log("\n📂 Scanning project files...");
   
   // 1) Scan for all components, hooks, pages, etc.
   const patterns = config.entryPaths;
-  const components = await scanComponents(patterns);
+  const projectRoot = process.cwd();
+  const components = await scanComponents(patterns, projectRoot);
   
 
   // 2) Generate MDX files and search index in temp directory first
@@ -21,7 +22,7 @@ export async function build(opts: { config?: string }) {
   await fs.rm(tempContentDir, { recursive: true, force: true });
   await fs.mkdir(tempContentDir, { recursive: true });
 
-  console.log("📝 Generating MDX documentation...");
+  console.log("\n📝 Generating MDX documentation...");
   await writeComponentPages(tempContentDir, components);
   await fs.writeFile(path.join(tempContentDir, "search.json"), JSON.stringify({ components }, null, 2));
   
@@ -49,8 +50,8 @@ export async function build(opts: { config?: string }) {
     await fs.rm(tempContentDir, { recursive: true, force: true });
     await fs.rm(siteTemplateDir, { recursive: true, force: true });
     
-    console.log("✓ Built unified documentation site in .smartdocs/");
-    console.log("🚀 Ready to deploy! Just point your hosting provider to the .smartdocs/ directory");
+    console.log("✓ Built unified documentation site in smartdocs/");
+    console.log("🚀 Ready to deploy! Just point your hosting provider to the smartdocs/ directory");
   } else {
     console.log("⚠️  Site template not found. Run 'smartdocs init' first.");
   }
@@ -97,7 +98,7 @@ async function buildNextSite(siteDir: string, outputDir: string): Promise<void> 
       
       if (!hasNodeModules || !hasPackageLock) {
         // Install dependencies first
-        console.log("📦 Installing dependencies...");
+        console.log("\n📦 Installing dependencies...");
         const install = spawn("npm", ["install"], { 
           cwd: siteDir, 
           stdio: "inherit",
@@ -159,7 +160,7 @@ async function buildNextSiteInPlace(buildDir: string): Promise<void> {
       
       if (!hasNodeModules || !hasPackageLock) {
         // Install dependencies first
-        console.log("📦 Installing dependencies...");
+        console.log("\n📦 Installing dependencies...");
         const install = spawn("npm", ["install"], { 
           cwd: buildDir, 
           stdio: "inherit",

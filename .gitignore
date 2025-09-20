@@ -12,7 +12,7 @@ out/
 .next/
 
 # SmartDocs generated files
-.smartdocs/
+smartdocs/
 smartdocs-dist/
 
 # Environment variables

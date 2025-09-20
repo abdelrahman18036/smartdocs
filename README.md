@@ -70,7 +70,7 @@ smartdocs init
 
 This creates:
 - `smartdocs.config.ts` - **Intelligent configuration** with comprehensive scanning
-- `.smartdocs/site/` - **Modern documentation site** template
+- `smartdocs/site/` - **Modern documentation site** template
 
 ### 2. Generate Documentation
 
@@ -148,7 +148,7 @@ export default defineConfig({
     "**/LICENSE*",
     "**/CHANGELOG*"
   ],
-  outDir: ".smartdocs",
+  outDir: "smartdocs",
   siteOutDir: "smartdocs-dist",
   parse: { 
     tsx: true, 
@@ -165,7 +165,7 @@ export default defineConfig({
 | `entryPaths` | `string[]` | `["**/*.{ts,tsx,js,jsx}"]` | Glob patterns for scanning (now covers entire project) |
 | `include` | `string[]` | `["./**"]` | Directories to include (comprehensive by default) |
 | `exclude` | `string[]` | `[...extensive list]` | Intelligent exclusion of config, test, and build files |
-| `outDir` | `string` | `".smartdocs"` | Output directory for generated files |
+| `outDir` | `string` | `"smartdocs"` | Output directory for generated files |
 | `siteOutDir` | `string` | `"smartdocs-dist"` | Static site output directory |
 | `parse.tsx` | `boolean` | `true` | Enable TypeScript JSX parsing |
 | `parse.jsx` | `boolean` | `true` | Enable JavaScript JSX parsing |
@@ -362,7 +362,7 @@ Welcome to our component library! Here's how to get started...
 ```
 your-project/
 ├── smartdocs.config.ts          # Configuration
-├── .smartdocs/
+├── smartdocs/
 │   ├── content/                 # Generated MDX files
 │   │   ├── components/          # Component documentation
 │   │   ├── hooks/              # Custom hook documentation  

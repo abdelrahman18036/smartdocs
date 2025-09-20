@@ -5,7 +5,7 @@ export const ConfigSchema = z.object({
   entryPaths: z.array(z.string()).default(["src/**/*.{ts,tsx,js,jsx}"]),
   include: z.array(z.string()).default(["src/**", "app/**", "pages/**"]),
   exclude: z.array(z.string()).default(["**/__tests__/**","**/*.stories.*","node_modules/**"]),
-  outDir: z.string().default(".smartdocs"),
+  outDir: z.string().default("smartdocs"),
   parse: z.object({ 
     tsx: z.boolean().default(true), 
     jsx: z.boolean().default(true) 

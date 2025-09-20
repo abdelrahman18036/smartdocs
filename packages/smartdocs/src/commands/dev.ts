@@ -55,7 +55,8 @@ async function buildDocumentation(config: Config): Promise<void> {
   console.log("📂 Scanning project files...");
   
   const patterns = config.entryPaths;
-  const components = await scanComponents(patterns);
+  const projectRoot = process.cwd();
+  const components = await scanComponents(patterns, projectRoot);
   
 
   const contentDir = path.join(config.outDir, "content");

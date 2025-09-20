@@ -16,24 +16,24 @@ export default defineConfig({
   entryPaths: ["**/*.{ts,tsx,js,jsx}"],
   include: ["./**"],
   exclude: ["**/__tests__/**","**/*.stories.*","node_modules/**","dist/**","build/**",".next/**",".nuxt/**","coverage/**","**/*.config.*","**/*.conf.*",".git/**",".vscode/**",".idea/**","public/**","static/**","assets/**"],
-  outDir: ".smartdocs",
+  outDir: "smartdocs",
   parse: { tsx: true, jsx: true }
 });
 `;
   await fs.writeFile(path.join(cwd, "smartdocs.config.ts"), cfg, "utf-8");
   
-  // 2. Copy the Next.js template to .smartdocs/site
+  // 2. Copy the Next.js template to smartdocs/site
   // Resolve template path relative to the CLI script location
   const scriptDir = path.dirname(__filename);
   // From dist/chunk-*.js, go up to package root, then to templates
   const packageRoot = path.resolve(scriptDir, "..");
   const templateSrcDir = path.join(packageRoot, "templates", "next-site");
-  const siteDestDir = path.join(cwd, ".smartdocs", "site");
+  const siteDestDir = path.join(cwd, "smartdocs", "site");
   
   await copyDirectory(templateSrcDir, siteDestDir);
   
   console.log("✓ Created smartdocs.config.ts");
-  console.log("✓ Scaffolded docs site in .smartdocs/site");
+  console.log("✓ Scaffolded docs site in smartdocs/site");
   console.log("\nNext steps:");
   console.log("  1. Run 'smartdocs build' to generate documentation");
   console.log("  2. Run 'smartdocs dev' to start development server");

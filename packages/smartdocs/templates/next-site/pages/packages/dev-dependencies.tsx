@@ -276,7 +276,7 @@ export const getStaticProps: GetStaticProps = async () => {
   let devDependencies: DevDependency[] = []
   
   try {
-    // Try to read package.json from the project root (go up from .smartdocs)
+    // Try to read package.json from the project root (go up from smartdocs)
     const fs = await import('fs')
     const path = await import('path')
     const packageJsonPath = path.join(process.cwd(), '..', 'package.json')

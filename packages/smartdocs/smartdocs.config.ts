@@ -2,10 +2,9 @@ import { defineConfig } from "smartdocs/config";
 
 export default defineConfig({
   projectName: "My App",
-  entryPaths: ["src/**/*.{ts,tsx,js,jsx}"],
-  include: ["src/**","app/**","pages/**"],
-  exclude: ["**/__tests__/**","**/*.stories.*","node_modules/**"],
-  outDir: ".smartdocs",
-  siteOutDir: "smartdocs-dist",
+  entryPaths: ["**/*.{ts,tsx,js,jsx}"],
+  include: ["./**"],
+  exclude: ["**/__tests__/**","**/*.stories.*","node_modules/**","dist/**","build/**",".next/**",".nuxt/**","coverage/**","**/*.config.*","**/*.conf.*",".git/**",".vscode/**",".idea/**","public/**","static/**","assets/**"],
+  outDir: "smartdocs",
   parse: { tsx: true, jsx: true }
 });

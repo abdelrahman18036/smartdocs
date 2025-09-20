@@ -2,6 +2,7 @@ import { GetStaticProps, GetStaticPaths } from 'next'
 import fs from 'fs'
 import path from 'path'
 import Pagination, { usePagination } from '../../components/Pagination'
+import { TypeOverrideControl } from '../../components/TypeOverrideControl'
 
 interface HookPageProps {
   component: any
@@ -21,7 +22,12 @@ export default function HookPage({ component }: HookPageProps) {
         </p>
         
         {/* Hook Information */}
-        <div className="flex gap-4 flex-wrap">
+        <div className="flex gap-4 flex-wrap items-center">
+          <TypeOverrideControl
+            componentName={component.displayName}
+            filePath={component.filePath}
+            currentType={component.type || 'hook'}
+          />
           {component.hookCategory && (
             <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
               Category: {component.hookCategory}

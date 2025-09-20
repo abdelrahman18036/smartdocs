@@ -5,6 +5,21 @@ import { globby } from "globby";
 import fs from "node:fs/promises";
 import path from "node:path";
 
+// User override types
+export interface ComponentOverride {
+  filePath: string;
+  componentName: string;
+  originalType: 'component' | 'hook' | 'page';
+  overrideType: 'component' | 'hook' | 'page';
+  timestamp: string;
+  reason?: string;
+}
+
+export interface OverridesConfig {
+  version: string;
+  overrides: ComponentOverride[];
+}
+
 export type ComponentDoc = {
   displayName: string;
   filePath: string;
@@ -53,6 +68,103 @@ const isMdx = (f: string) => /\.(md|mdx)$/.test(f);
 const isHook = (name: string) => name.startsWith('use');
 
 
+// Override management functions
+const loadOverrides = async (projectRoot: string): Promise<OverridesConfig> => {
+  const overridesPath = path.join(projectRoot, '.smartdocs-overrides.json');
+  
+  try {
+    const content = await fs.readFile(overridesPath, 'utf-8');
+    return JSON.parse(content);
+  } catch (error) {
+    // Return empty config if file doesn't exist
+    return {
+      version: '1.0.0',
+      overrides: []
+    };
+  }
+};
+
+const saveOverrides = async (projectRoot: string, config: OverridesConfig): Promise<void> => {
+  const overridesPath = path.join(projectRoot, '.smartdocs-overrides.json');
+  
+  try {
+    await fs.writeFile(overridesPath, JSON.stringify(config, null, 2));
+  } catch (error) {
+    console.warn('Failed to save overrides file:', error);
+  }
+};
+
+const findOverride = (overrides: ComponentOverride[], filePath: string, componentName: string): ComponentOverride | undefined => {
+  return overrides.find(override => 
+    override.filePath === filePath && override.componentName === componentName
+  );
+};
+
+// Export function to add/update overrides (for API use)
+export const updateComponentOverride = async (
+  projectRoot: string, 
+  filePath: string, 
+  componentName: string, 
+  originalType: ComponentDoc['type'], 
+  newType: ComponentDoc['type'], 
+  reason?: string
+): Promise<void> => {
+  const config = await loadOverrides(projectRoot);
+  
+  // Find existing override or create new one
+  const existingIndex = config.overrides.findIndex(override => 
+    override.filePath === filePath && override.componentName === componentName
+  );
+  
+  const newOverride: ComponentOverride = {
+    filePath,
+    componentName,
+    originalType: originalType as 'component' | 'hook' | 'page',
+    overrideType: newType as 'component' | 'hook' | 'page',
+    timestamp: new Date().toISOString(),
+    reason
+  };
+  
+  if (existingIndex >= 0) {
+    config.overrides[existingIndex] = newOverride;
+  } else {
+    config.overrides.push(newOverride);
+  }
+  
+  await saveOverrides(projectRoot, config);
+};
+
+// Export function to remove overrides (for API use)
+export const removeComponentOverride = async (
+  projectRoot: string, 
+  filePath: string, 
+  componentName: string
+): Promise<void> => {
+  const config = await loadOverrides(projectRoot);
+  config.overrides = config.overrides.filter(override => 
+    !(override.filePath === filePath && override.componentName === componentName)
+  );
+  await saveOverrides(projectRoot, config);
+};
+
+// Helper function to detect page-specific content patterns
+const hasPageSpecificPatterns = (fileContent: string): boolean => {
+  const pagePatterns = [
+    // Next.js specific functions
+    'getStaticProps', 'getServerSideProps', 'getStaticPaths', 'generateStaticParams', 'generateMetadata',
+    // React Router hooks
+    'useParams', 'useSearchParams', 'useNavigate', 'useLocation', 'useRouteLoaderData',
+    // Next.js router hooks
+    'useRouter', 'usePathname', 'useSearchParams',
+    // Page lifecycle patterns
+    'Head from', 'metadata =', 'export const metadata',
+    // Common page patterns
+    'params:', 'searchParams:', 'query:', 'slug:'
+  ];
+  
+  return pagePatterns.some(pattern => fileContent.includes(pattern));
+};
+
 // Helper function to check if component is referenced in routes/navigation
 const isReferencedInRoutes = async (filePath: string, componentName: string): Promise<boolean> => {
   try {
@@ -67,38 +179,57 @@ const isReferencedInRoutes = async (filePath: string, componentName: string): Pr
       currentDir = parentDir;
     }
     
-    // Comprehensive routing/navigation file patterns
+    // Enhanced routing/navigation file patterns with descriptions
     const routingPatterns = [
-      // Router configuration files
-      '**/*router*',
-      '**/*route*',
-      '**/*routes*',
-      '**/router.{ts,tsx,js,jsx}',
-      '**/routes.{ts,tsx,js,jsx}',
-      '**/routing.{ts,tsx,js,jsx}',
-      // Navigation files
-      '**/*nav*',
-      '**/*navigation*',
-      '**/*menu*',
-      '**/*sidebar*',
-      '**/*header*',
-      '**/*layout*',
-      // Main application files that often contain routing
-      '**/App.{ts,tsx,js,jsx}',
-      '**/app.{ts,tsx,js,jsx}',
-      '**/index.{ts,tsx,js,jsx}',
-      '**/main.{ts,tsx,js,jsx}',
-      // Next.js specific
-      '**/pages/_app.{ts,tsx,js,jsx}',
-      '**/src/app/layout.{ts,tsx,js,jsx}',
-      // Common config files
-      '**/config/**/*.{ts,tsx,js,jsx}',
-      // Any file that might contain navigation links
-      '**/*link*',
-      '**/*breadcrumb*'
+      // React Router configuration files
+      { pattern: '**/*router*', type: 'router_config', description: 'React Router configuration files' },
+      { pattern: '**/*route*', type: 'route_config', description: 'Route configuration files' },
+      { pattern: '**/*routes*', type: 'routes_config', description: 'Routes definition files' },
+      { pattern: '**/router.{ts,tsx,js,jsx}', type: 'router_file', description: 'Router implementation files' },
+      { pattern: '**/routes.{ts,tsx,js,jsx}', type: 'routes_file', description: 'Routes definition files' },
+      { pattern: '**/routing.{ts,tsx,js,jsx}', type: 'routing_file', description: 'Routing logic files' },
+      
+      // Navigation components
+      { pattern: '**/*nav*', type: 'navigation', description: 'Navigation components' },
+      { pattern: '**/*navigation*', type: 'navigation', description: 'Navigation components' },
+      { pattern: '**/*menu*', type: 'menu', description: 'Menu components' },
+      { pattern: '**/*sidebar*', type: 'sidebar', description: 'Sidebar components' },
+      { pattern: '**/*header*', type: 'header', description: 'Header components' },
+      { pattern: '**/*layout*', type: 'layout', description: 'Layout components' },
+      
+      // Main application files
+      { pattern: '**/App.{ts,tsx,js,jsx}', type: 'main_app', description: 'Main App component' },
+      { pattern: '**/app.{ts,tsx,js,jsx}', type: 'main_app', description: 'Main app files' },
+      { pattern: '**/index.{ts,tsx,js,jsx}', type: 'index', description: 'Index/entry files' },
+      { pattern: '**/main.{ts,tsx,js,jsx}', type: 'main', description: 'Main entry files' },
+      
+      // Next.js App Router (v13+)
+      { pattern: '**/app/**/page.{ts,tsx,js,jsx}', type: 'nextjs_app_page', description: 'Next.js App Router pages' },
+      { pattern: '**/app/**/layout.{ts,tsx,js,jsx}', type: 'nextjs_app_layout', description: 'Next.js App Router layouts' },
+      { pattern: '**/app/**/loading.{ts,tsx,js,jsx}', type: 'nextjs_app_loading', description: 'Next.js App Router loading UI' },
+      { pattern: '**/app/**/error.{ts,tsx,js,jsx}', type: 'nextjs_app_error', description: 'Next.js App Router error UI' },
+      { pattern: '**/app/**/not-found.{ts,tsx,js,jsx}', type: 'nextjs_app_notfound', description: 'Next.js App Router not-found' },
+      { pattern: '**/app/globals.css', type: 'nextjs_app_styles', description: 'Next.js App Router global styles' },
+      
+      // Next.js Pages Router (traditional)
+      { pattern: '**/pages/**/*.{ts,tsx,js,jsx}', type: 'nextjs_page', description: 'Next.js Pages Router pages' },
+      { pattern: '**/pages/_app.{ts,tsx,js,jsx}', type: 'nextjs_app_component', description: 'Next.js App component' },
+      { pattern: '**/pages/_document.{ts,tsx,js,jsx}', type: 'nextjs_document', description: 'Next.js Document component' },
+      { pattern: '**/pages/api/**/*.{ts,tsx,js,jsx}', type: 'nextjs_api', description: 'Next.js API routes' },
+      
+      // Framework-specific patterns
+      { pattern: '**/src/app/**/*.{ts,tsx,js,jsx}', type: 'app_router', description: 'App router files' },
+      { pattern: '**/src/pages/**/*.{ts,tsx,js,jsx}', type: 'pages_router', description: 'Pages router files' },
+      
+      // Configuration and utility files
+      { pattern: '**/config/**/*.{ts,tsx,js,jsx}', type: 'config', description: 'Configuration files' },
+      { pattern: '**/*link*', type: 'link_component', description: 'Link components' },
+      { pattern: '**/*breadcrumb*', type: 'breadcrumb', description: 'Breadcrumb components' }
     ];
+
+    const patterns = routingPatterns.map(p => p.pattern);
     
-    const files = await globby(routingPatterns, { 
+    const files = await globby(patterns, { 
       cwd: currentDir,
       absolute: true,
       gitignore: true 
@@ -116,6 +247,12 @@ const isReferencedInRoutes = async (filePath: string, componentName: string): Pr
           componentName.replace(/([A-Z])/g, '-$1').toLowerCase().substring(1), // kebab-case
           componentName.replace(/([A-Z])/g, '_$1').toLowerCase().substring(1), // snake_case
         ];
+        
+        // Find the matching routing pattern type
+        const matchingPattern = routingPatterns.find(p => {
+          const minimatchPattern = p.pattern.replace(/\*\*/g, '*');
+          return routeFile.includes(p.pattern.split('*')[0]) || routeFile.match(minimatchPattern);
+        });
         
         // Check for comprehensive route/navigation patterns
         const isReferenced = componentNameVariants.some(variant => {
@@ -413,7 +550,15 @@ const isReferencedInRoutes = async (filePath: string, componentName: string): Pr
 };
 
 // Helper function to analyze code content and determine type
-const analyzeCodeContent = async (filePath: string, name: string, code?: string): Promise<'component' | 'hook' | 'page'> => {
+const analyzeCodeContent = async (filePath: string, name: string, code?: string, projectRoot?: string): Promise<'component' | 'hook' | 'page'> => {
+  // Check for user overrides first
+  if (projectRoot) {
+    const overridesConfig = await loadOverrides(projectRoot);
+    const override = findOverride(overridesConfig.overrides, filePath, name);
+    if (override) {
+      return override.overrideType;
+    }
+  }
   // 1. Hook detection - names starting with 'use'
   if (isHook(name)) {
     return 'hook';
@@ -479,18 +624,70 @@ const analyzeCodeContent = async (filePath: string, name: string, code?: string)
     return 'component';
   }
   
-  // Special pre-checks before route detection
+  // Enhanced Next.js and file-based routing detection
+  const normalizedPath = filePath.replace(/\\/g, '/');
   
-  // File-based routing override (Next.js, Nuxt, etc.) - check filename patterns
-  if ((filePath.includes('/pages/') || filePath.includes('\\pages\\') ||
-       filePath.includes('/routes/') || filePath.includes('\\routes\\')) &&
-      (filePath.endsWith('page.tsx') || filePath.endsWith('page.ts') ||
-       filePath.endsWith('page.jsx') || filePath.endsWith('page.js') ||
-       filePath.endsWith('.page.tsx') || filePath.endsWith('.page.ts') ||
-       filePath.endsWith('.page.jsx') || filePath.endsWith('.page.js') ||
-       filePath.endsWith('route.tsx') || filePath.endsWith('route.ts') ||
-       filePath.endsWith('index.tsx') || filePath.endsWith('index.ts'))) {
+  // Next.js App Router (v13+) - definitive page patterns
+  if (normalizedPath.includes('/app/') && 
+      (normalizedPath.endsWith('/page.tsx') || normalizedPath.endsWith('/page.ts') || 
+       normalizedPath.endsWith('/page.jsx') || normalizedPath.endsWith('/page.js'))) {
     return 'page';
+  }
+  
+  // Next.js Pages Router - comprehensive patterns
+  if (normalizedPath.includes('/pages/')) {
+    // Exclude Next.js special files that aren't pages
+    const isSpecialNextFile = normalizedPath.endsWith('/_app.tsx') || 
+                              normalizedPath.endsWith('/_app.ts') ||
+                              normalizedPath.endsWith('/_app.jsx') || 
+                              normalizedPath.endsWith('/_app.js') ||
+                              normalizedPath.endsWith('/_document.tsx') || 
+                              normalizedPath.endsWith('/_document.ts') ||
+                              normalizedPath.endsWith('/_document.jsx') || 
+                              normalizedPath.endsWith('/_document.js') ||
+                              normalizedPath.includes('/api/'); // API routes are not pages
+    
+    if (!isSpecialNextFile) {
+      // Next.js pages include: index files, named files, dynamic routes
+      const isNextPage = normalizedPath.match(/\/pages\/.*\.(tsx?|jsx?)$/) &&
+                         !normalizedPath.includes('/_') && // Exclude other special files
+                         (fileContent.includes('export default') || 
+                          fileContent.includes('export { default }'));
+      
+      if (isNextPage) {
+        return 'page';
+      }
+    }
+  }
+  
+  // Dynamic route detection for Next.js
+  const isDynamicRoute = normalizedPath.includes('[') && normalizedPath.includes(']') &&
+                         (normalizedPath.includes('/pages/') || normalizedPath.includes('/app/')) &&
+                         (fileContent.includes('export default') || fileContent.includes('getStaticProps') || 
+                          fileContent.includes('getServerSideProps') || fileContent.includes('generateStaticParams'));
+  
+  if (isDynamicRoute) {
+    return 'page';
+  }
+  
+  // Generic file-based routing patterns (for other frameworks)
+  if ((normalizedPath.includes('/routes/') || normalizedPath.includes('/views/')) &&
+      (normalizedPath.endsWith('page.tsx') || normalizedPath.endsWith('page.ts') ||
+       normalizedPath.endsWith('page.jsx') || normalizedPath.endsWith('page.js') ||
+       normalizedPath.endsWith('.page.tsx') || normalizedPath.endsWith('.page.ts') ||
+       normalizedPath.endsWith('.page.jsx') || normalizedPath.endsWith('.page.js') ||
+       normalizedPath.endsWith('route.tsx') || normalizedPath.endsWith('route.ts') ||
+       normalizedPath.endsWith('index.tsx') || normalizedPath.endsWith('index.ts'))) {
+    return 'page';
+  }
+  
+  // Check for page-specific content patterns (Next.js functions, router hooks, etc.)
+  if (hasPageSpecificPatterns(fileContent)) {
+    // Additional validation - must have default export and not be obviously a component
+    if ((fileContent.includes('export default') || fileContent.includes('export { default }')) && 
+        !isObviouslyNotPage) {
+      return 'page';
+    }
   }
   
   // Special naming patterns that strongly indicate pages
@@ -543,11 +740,27 @@ function getHookCategory(hookName: string): ComponentDoc['hookCategory'] {
   return 'custom';
 }
 
-export async function scanComponents(patterns: string[]): Promise<ComponentDoc[]> {
+export async function scanComponents(patterns: string[], projectRoot?: string): Promise<ComponentDoc[]> {
+  // Determine project root if not provided
+  const rootDir = projectRoot || process.cwd();
   const files = await globby(patterns, { 
     gitignore: true, 
     absolute: true,
     ignore: [
+      // SmartDocs exclusions - don't scan SmartDocs itself
+      '**/.smartdocs/**/*',
+      '**/smartdocs/**/*',
+      '**/smartdocs-*/**/*',
+      '**/node_modules/smartdocs/**/*',
+      '**/smartdocs.config.*',
+      '**/smartdocs-dist/**/*',
+      // Node modules and dependencies
+      '**/node_modules/**/*',
+      '**/.pnpm/**/*',
+      '**/.yarn/**/*',
+      '**/dist/**/*',
+      '**/build/**/*',
+      '**/out/**/*',
       // Common config files
       '**/*.config.{js,ts,mjs,cjs}',
       '**/*.conf.{js,ts}',
@@ -570,7 +783,13 @@ export async function scanComponents(patterns: string[]): Promise<ComponentDoc[]
       '**/*.test.{js,ts,tsx,jsx}',
       '**/*.spec.{js,ts,tsx,jsx}',
       '**/__tests__/**/*',
-      // Misc
+      // Version control and misc
+      '**/.git/**/*',
+      '**/.next/**/*',
+      '**/.nuxt/**/*',
+      '**/coverage/**/*',
+      '**/temp/**/*',
+      '**/tmp/**/*',
       '**/setup*.{js,ts}',
       '**/index.d.ts',
       '**/*.d.ts'
@@ -651,7 +870,7 @@ export async function scanComponents(patterns: string[]): Promise<ComponentDoc[]
         for (const p of parsed) {
           const name = p.displayName;
           // Determine type based on code content, not directory location
-          const docType = await analyzeCodeContent(file, name, code);
+          const docType = await analyzeCodeContent(file, name, code, rootDir);
           
           // Enhanced props extraction with safe defaultValue serialization
           const props = Object.entries(p.props ?? {}).map(([propName, pr]: [string, any]) => {
@@ -755,7 +974,7 @@ export async function scanComponents(patterns: string[]): Promise<ComponentDoc[]
         for (const c of components) {
           const name = c.displayName || inferNameFromPath(file);
           // Determine type based on code content, not directory location
-          const docType = await analyzeCodeContent(file, name, code);
+          const docType = await analyzeCodeContent(file, name, code, rootDir);
           
           // Extract real usage examples for components or hooks
           const realUsageExamples = docType === 'component' ? 

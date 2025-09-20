@@ -2,6 +2,7 @@ import { GetStaticProps, GetStaticPaths } from 'next'
 import fs from 'fs'
 import path from 'path'
 import Pagination, { usePagination } from '../../components/Pagination'
+import { TypeOverrideControl } from '../../components/TypeOverrideControl'
 
 interface ComponentPageProps {
   component: any
@@ -21,10 +22,12 @@ export default function ComponentPage({ component }: ComponentPageProps) {
         </p>
         
         {/* Component Information */}
-        <div className="flex gap-4 flex-wrap">
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-            React Component
-          </span>
+        <div className="flex gap-4 flex-wrap items-center">
+          <TypeOverrideControl
+            componentName={component.displayName}
+            filePath={component.filePath}
+            currentType={component.type || 'component'}
+          />
           {component.props && component.props.length > 0 && (
             <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
               {component.props.length} prop{component.props.length !== 1 ? 's' : ''}
@@ -239,7 +242,7 @@ export default function ComponentPage({ component }: ComponentPageProps) {
 
 export const getStaticPaths: GetStaticPaths = async () => {
   try {
-    const searchPath = path.join(process.cwd(), '..', 'content', 'search.json')
+    const searchPath = path.join(process.cwd(),  'content', 'search.json')
     const searchData = JSON.parse(fs.readFileSync(searchPath, 'utf-8'))
     
     const paths = searchData.components

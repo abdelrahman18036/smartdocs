@@ -85,7 +85,7 @@ export function SearchBox({ components }: SearchBoxProps) {
           className="w-full rounded-xl border border-input bg-background/50 backdrop-blur-sm pl-10 pr-12 py-3 text-sm placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 focus:ring-offset-2 transition-all duration-200"
         />
         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center space-x-1">
-          <kbd className="inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+          <kbd className="hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
             <Command className="h-3 w-3" />
             K
           </kbd>
@@ -142,8 +142,8 @@ export function SearchBox({ components }: SearchBoxProps) {
       {/* Full search results modal/overlay */}
       {showAllResults && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm">
-          <div className="min-h-full flex items-start justify-center pt-8 pb-8">
-            <div className="bg-background rounded-xl border border-border shadow-xl w-full max-w-4xl mx-4 max-h-[80vh] overflow-hidden">
+          <div className="min-h-full flex items-start justify-center p-4 sm:pt-8 sm:pb-8">
+            <div className="bg-background rounded-xl border border-border shadow-xl w-full max-w-4xl max-h-[90vh] sm:max-h-[80vh] overflow-hidden">
               {/* Header */}
               <div className="p-6 border-b border-border">
                 <div className="flex items-center justify-between">
@@ -166,12 +166,12 @@ export function SearchBox({ components }: SearchBoxProps) {
 
               {/* Results */}
               <div className="p-6 overflow-y-auto max-h-[60vh]">
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
                   {currentItems.map((item, index) => (
                     <a
                       key={index}
                       href={`/${item.type}s/${item.displayName.toLowerCase()}`}
-                      className="block p-4 rounded-lg border border-border hover:border-ring transition-all duration-200 hover:shadow-sm"
+                      className="block p-3 sm:p-4 rounded-lg border border-border hover:border-ring transition-all duration-200 hover:shadow-sm"
                       onClick={hideFullResults}
                     >
                       <div className="flex items-start justify-between">

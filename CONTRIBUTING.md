@@ -557,7 +557,7 @@ npx smartdocs init
 # Test 2: Build with real components
 # Create sample React components, hooks, pages
 npx smartdocs build
-# Verify: Generates .smartdocs directory with proper structure
+# Verify: Generates smartdocs directory with proper structure
 # Verify: No parsing errors for config files
 # Verify: Component categorization is accurate
 

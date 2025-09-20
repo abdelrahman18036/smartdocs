@@ -31,20 +31,18 @@ export default function Home({ components }: HomeProps) {
         </div>
 
         {/* Statistics Cards */}
-        <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto pt-4">
           {/* Total Count */}
-          <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl px-5 py-3 shadow-lg border border-slate-200/50 dark:border-slate-700/50 min-w-[120px]">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-slate-500 to-slate-600 flex items-center justify-center text-white text-sm">
+          <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-slate-200/50 dark:border-slate-700/50 h-[100px] flex flex-col justify-center items-center">
+            <div className="text-center">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-slate-500 to-slate-600 flex items-center justify-center text-white mx-auto mb-2">
                 <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
               </div>
-              <div>
-                <div className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                  {totalItems}
-                </div>
-                <div className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                  Total Items
-                </div>
+              <div className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                {totalItems}
+              </div>
+              <div className="text-xs text-slate-600 dark:text-slate-400">
+                Total Items
               </div>
             </div>
           </div>
@@ -81,18 +79,16 @@ export default function Home({ components }: HomeProps) {
             };
             
             return (
-              <div key={type} className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl px-5 py-3 shadow-lg border border-slate-200/50 dark:border-slate-700/50 min-w-[120px]">
-                <div className="flex items-center gap-2">
-                  <div className={`w-8 h-8 rounded-lg bg-gradient-to-r ${config.gradient} flex items-center justify-center text-white text-sm`}>
+              <div key={type} className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-slate-200/50 dark:border-slate-700/50 h-[100px] flex flex-col justify-center items-center">
+                <div className="text-center">
+                  <div className={`w-8 h-8 rounded-lg bg-gradient-to-r ${config.gradient} flex items-center justify-center text-white mx-auto mb-2`}>
                     {config.icon}
                   </div>
-                  <div>
-                    <div className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                      {count as number}
-                    </div>
-                    <div className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                      {config.label}
-                    </div>
+                  <div className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                    {count as number}
+                  </div>
+                  <div className="text-xs text-slate-600 dark:text-slate-400">
+                    {config.label}
                   </div>
                 </div>
               </div>
@@ -101,23 +97,23 @@ export default function Home({ components }: HomeProps) {
         </div>
 
         {/* Search Section */}
-        <div className="pt-8">
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">
+        <div className="pt-6">
+          <div className="mb-4 text-center">
+            <h3 className="text-base font-semibold text-slate-700 dark:text-slate-300 mb-1">
               🔍 Search Documentation
             </h3>
             <p className="text-slate-600 dark:text-slate-400 text-sm">
-              Find components, hooks, pages, and APIs instantly with intelligent search
+              Find components, hooks, and pages instantly
             </p>
           </div>
-          <div className="max-w-2xl mx-auto">
+          <div className="w-full">
             <SearchBox components={components} />
           </div>
         </div>
       </div>
 
       {/* Documentation Grid */}
-      <div className="space-y-8 pt-8">
+      <div className="space-y-6">
       
         <ComponentsList components={components} />
       </div>

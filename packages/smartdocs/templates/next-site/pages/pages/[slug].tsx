@@ -3,6 +3,7 @@ import fs from 'fs'
 import path from 'path'
 import Link from 'next/link'
 import Pagination, { usePagination } from '../../components/Pagination'
+import { TypeOverrideControl } from '../../components/TypeOverrideControl'
 
 // Helper function to extract components used in a page
 function extractUsedComponents(pageContent: string, allComponents: any[]) {
@@ -202,10 +203,12 @@ export default function PagePage({ component, usedComponents }: PagePageProps) {
         </p>
         
         {/* Page Information */}
-        <div className="flex gap-4 flex-wrap">
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-            React Page
-          </span>
+        <div className="flex gap-4 flex-wrap items-center">
+          <TypeOverrideControl
+            componentName={component.displayName}
+            filePath={component.filePath}
+            currentType={component.type || 'page'}
+          />
           {component.props && component.props.length > 0 && (
             <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
               {component.props.length} prop{component.props.length !== 1 ? 's' : ''}

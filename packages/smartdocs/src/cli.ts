@@ -10,7 +10,7 @@ import { check } from "./commands/check";
 const program = new Command();
 program.name("smartdocs")
   .description("🚀 Smart documentation generator for React/Next.js projects")
-  .version("0.1.0-beta.0");
+  .version("0.1.3");
 
 program.command("init")
   .description("📋 Initialize SmartDocs in your project")

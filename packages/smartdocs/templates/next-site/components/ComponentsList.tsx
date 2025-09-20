@@ -62,19 +62,19 @@ function ComponentSection({ type, items }: { type: string; items: ComponentData[
     <section className="space-y-8">
       <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center space-x-4">
-            <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-r ${getGradient(type)} border-2 border-white dark:border-slate-700 shadow-lg`}>
-              <div className="text-lg">
+          <div className="flex items-center space-x-3 sm:space-x-4">
+            <div className={`flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-gradient-to-r ${getGradient(type)} border-2 border-white dark:border-slate-700 shadow-lg`}>
+              <div className="text-base sm:text-lg">
                 {getIcon(type)}
               </div>
             </div>
             <div>
-              <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{typeLabel}</h2>
-              <div className="flex items-center gap-3 mt-1">
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{typeLabel}</h2>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mt-1">
                 <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
                   {totalItems} {totalItems === 1 ? type : type + 's'} available
                 </p>
-                <div className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${getBadgeColor(type)} shadow-sm`}>
+                <div className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${getBadgeColor(type)} shadow-sm w-fit`}>
                   {type === 'hook' && '🪝 '}
                   {type === 'component' && '⚛️ '}
                   {type === 'page' && '📄 '}
@@ -97,8 +97,8 @@ function ComponentSection({ type, items }: { type: string; items: ComponentData[
         </div>
       </div>
       
-      {/* Cards Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {/* Cards Grid - Responsive */}
+      <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {currentItems.map((item) => (
           <a
             key={item.displayName}
@@ -197,70 +197,6 @@ export function ComponentsList({ components }: ComponentsListProps) {
 
   return (
     <div className="space-y-16">
-      {/* Enhanced Overview Dashboard */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 rounded-2xl p-8 border border-slate-200 dark:border-slate-700 shadow-xl">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 bg-grid-slate-100 dark:bg-grid-slate-700/50 opacity-30"></div>
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-transparent to-purple-50/50 dark:from-blue-900/10 dark:to-purple-900/10"></div>
-        
-        <div className="relative">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-slate-900 via-slate-700 to-slate-900 dark:from-slate-100 dark:via-slate-300 dark:to-slate-100 bg-clip-text text-transparent mb-2">
-              📚 Documentation Overview
-            </h2>
-            <p className="text-slate-600 dark:text-slate-400 font-medium">
-              Your complete codebase documentation at a glance
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            {Object.entries(groupedComponents).map(([type, items]) => (
-              <div key={type} className="group">
-                <div className="bg-white dark:bg-slate-800/50 rounded-2xl p-8 border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2 backdrop-blur-sm">
-                  <div className="text-center">
-                    <div className={`mx-auto w-20 h-20 rounded-2xl bg-gradient-to-r ${getGradient(type)} border-2 border-white dark:border-slate-700 shadow-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                      <div className="text-2xl">
-                        {getIcon(type)}
-                      </div>
-                    </div>
-                    <div className="text-4xl font-bold text-slate-900 dark:text-slate-100 mb-2 group-hover:scale-110 transition-transform duration-300">
-                      {items.length}
-                    </div>
-                    <div className="text-base font-semibold text-slate-600 dark:text-slate-400 capitalize mb-3">
-                      {type}{items.length !== 1 ? 's' : ''}
-                    </div>
-                    <div className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium ${getBadgeColor(type)} shadow-sm`}>
-                      {type === 'hook' && '🪝 '}
-                      {type === 'component' && '⚛️ '}
-                      {type === 'page' && '📄 '}
-                      {type === 'mdx' && '📝 '}
-                      {type.charAt(0).toUpperCase() + type.slice(1)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          
-          {/* Total Stats */}
-          <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="text-center sm:text-left">
-                <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-                  {Object.values(groupedComponents).reduce((acc, items) => acc + items.length, 0)} Total Items
-                </div>
-                <div className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-                  Documented across {Object.keys(groupedComponents).length} categories
-                </div>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="font-medium">Documentation up to date</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Sections with Pagination */}
       {sortedSections.map(([type, items]) => (
