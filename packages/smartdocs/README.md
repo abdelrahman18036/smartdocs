@@ -20,14 +20,17 @@ SmartDocs intelligently analyzes your React codebase to create beautiful, modern
 ## 🚀 Quick Start
 
 ```bash
-# Initialize project
-npx smartdocs init
+# Install globally (recommended)
+npm install -g smartdocs
 
-# Generate documentation
-npx smartdocs build
+# Initialize project
+smartdocs init        # or: npx smartdocs init
+
+# Generate documentation  
+smartdocs build       # or: npx smartdocs build
 
 # Start development server
-npx smartdocs dev
+smartdocs dev          # or: npx smartdocs dev
 ```
 
 SmartDocs automatically scans your codebase and generates a complete documentation site in `smartdocs/` directory.
@@ -36,10 +39,10 @@ SmartDocs automatically scans your codebase and generates a complete documentati
 
 | Command | Description |
 |---------|-------------|
-| `npx smartdocs init` | Initialize with intelligent config |
-| `npx smartdocs build` | Generate static documentation |
-| `npx smartdocs dev` | Start development server |
-| `npx smartdocs check` | Validate configuration |
+| `smartdocs init` or `npx smartdocs init` | Initialize with intelligent config |
+| `smartdocs build` or `npx smartdocs build` | Generate static documentation |
+| `smartdocs dev` or `npx smartdocs dev` | Start development server |
+| `smartdocs check` or `npx smartdocs check` | Validate configuration |
 
 ## ⚙️ Configuration
 
@@ -64,9 +67,13 @@ export default defineConfig({
 ## 🚀 Deploy
 
 ```bash
-npx smartdocs build
-npx vercel --prod smartdocs
-# or upload smartdocs/ to any static host
+# Build documentation
+smartdocs build       # or: npx smartdocs build
+
+# Deploy to Vercel
+npx vercel --prod smartdocs-dist
+
+# Or upload smartdocs-dist/ to any static host
 ```
 
 ## 🛠️ Requirements

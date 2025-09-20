@@ -103,7 +103,7 @@ export function Layout({ children }: LayoutProps) {
                     GitHub
                   </a>
                   <span className="text-muted-foreground/50">•</span>
-                  <span className="font-mono text-xs bg-muted px-2 py-1 rounded">SmartDocs v0.1.3</span>
+                  <span className="font-mono text-xs bg-muted px-2 py-1 rounded">SmartDocs v0.1.4</span>
                 </div>
               </div>
             </div>
